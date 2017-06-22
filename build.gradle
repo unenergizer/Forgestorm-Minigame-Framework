@@ -1,0 +1,115 @@
+import com.sun.org.apache.xalan.internal.xsltc.cmdline.Compile
+
+group 'com.forgestorm.mgf'
+version '0.1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'maven'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+// Manifest
+jar {
+    manifest.attributes provider: 'gradle'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+// Force UTF-8
+tasks.withType(Compile) {
+    options.encoding = 'UTF-8'
+}
+
+// ========================= Clean extension ========================= //
+// Removes the folder out/ which is would have otherwise been left in
+// the root directory, if it wasn't for this method.
+
+clean.doFirst {
+    delete "$rootDir/out/"
+}
+
+// ========================= Custom compilation task ========================= //
+// Bundles all of the compiled jars into a nice and sane directory. (/out/)
+
+tasks.withType(Jar) {
+    destinationDir = file("$rootDir/out/")
+}
+
+// ========================= Provided scope ========================= //
+// The provided scope, allows the developer to choose which dependencies
+// will be shaded into the jar file. Provided tells the compiler that the
+// dependency is provided at runtime and should therefor not be compiled
+// while compile tells the compiler that it is needed right here and now
+// and should therefor be compiled into the jar.
+
+configurations {
+    provided
+    compile.extendsFrom provided
+}
+
+artifacts {
+    archives jar
+}
+
+jar {
+    dependsOn configurations.runtime
+    from {
+        (configurations.runtime - configurations.provided).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+}
+
+sourceSets {
+    main {
+        output.resourcesDir = "build/classes/main"
+    }
+    test {
+        output.resourcesDir = "build/classes/test"
+    }
+}
+
+configurations.all {
+    resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+}
+
+// ========================= Repositories ========================= //
+
+repositories {
+    mavenCentral()
+
+    maven {
+        name 'Spigot'
+        url 'https://hub.spigotmc.org/nexus/content/groups/public/'
+    }
+
+    maven {
+        name 'BungeeCord'
+        url 'https://oss.sonatype.org/content/repositories/snapshots'
+    }
+
+    maven {
+        name 'puha-repo'
+        url 'http://repo.puha.io/nexus/content/repositories/releases/'
+    }
+
+    maven {
+        name 'jitpack.io'
+        url 'https://jitpack.io'
+    }
+}
+
+// ========================= Dependencies ========================= //
+
+dependencies {
+    provided group: 'org.spigotmc', name: 'spigot-api', version: '1.11-R0.1-SNAPSHOT'
+    provided group: 'org.projectlombok', name: 'lombok', version: '1.16.10'
+    provided group: 'net.md-5', name: 'bungeecord-api', version: '1.10-SNAPSHOT'
+    provided group: 'io.puharesource.mc', name: 'TitleManager', version: '2.0.0'
+    provided files("C:/Users/unene/workspace/forgestorm-spigotcore/out/forgestorm-spigotcore-0.0.1-SNAPSHOT.jar")
+}

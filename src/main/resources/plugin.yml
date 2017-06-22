@@ -1,0 +1,11 @@
+name: FS-MGFramework
+main: com.forgestorm.mgf.MinigameFramework
+version: 0.1
+description: ForgeStorm MiniGame Framework
+author: Robert Andrew Brown
+website: http://www.forgestorm.com/
+depend: [TitleManager, FS-SpigotCore]
+commands:
+   admin:
+   lobby:
+      aliases: [hub]
