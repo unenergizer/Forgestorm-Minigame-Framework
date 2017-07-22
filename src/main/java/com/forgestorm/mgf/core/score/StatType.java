@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
  * without the prior written permission of the owner.
  */
 
+@SuppressWarnings("unused")
 public enum StatType {
 
     FIRST_KILL(FirstKill.class),

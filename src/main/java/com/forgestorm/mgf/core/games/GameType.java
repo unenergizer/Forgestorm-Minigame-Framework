@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
  * without the prior written permission of the owner.
  */
 
+@SuppressWarnings("unused")
 public enum GameType {
 
     SHEER_SHEEP(SheerSheep.class, "Sheer Sheep"),

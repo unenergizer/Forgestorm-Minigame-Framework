@@ -9,7 +9,6 @@ import com.forgestorm.mgf.core.world.WorldManager;
 import com.forgestorm.mgf.player.PlayerManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -92,11 +91,6 @@ public class GameManager extends BukkitRunnable {
         // Set defaults
         inLobby = true;
         currentArenaWorldLoaded = false;
-
-        // Remove lobby entities.
-        for (Entity entity : Bukkit.getWorlds().get(0).getEntities()) {
-            entity.remove();
-        }
 
         // Create and setup the lobby
         gameLobby = new GameLobby(plugin, this, currentMinigame);

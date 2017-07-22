@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class ScoreManager {
 
-    // Register stat statlisteners to game.
+    // Register stat stat listeners to game.
     // Choose "main" stat listener for a players/teams placing.
 
     // StatType => kills
@@ -45,7 +45,7 @@ public class ScoreManager {
             playerStats.put(player, statsForPlayer);
         });
 
-        // Save stat statlisteners
+        // Save stat stat listeners
         statTypes.forEach(statType -> statListeners.add(statType.registerListener(plugin)));
     }
 
@@ -62,7 +62,7 @@ public class ScoreManager {
     }
 
     public void deregisterListeners() {
-        statListeners.forEach(statListener -> statListener.deregister());
+        statListeners.forEach(StatListener::deregister);
     }
 
     public void updateDatabase() {

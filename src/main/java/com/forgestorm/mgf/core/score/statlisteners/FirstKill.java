@@ -26,7 +26,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 public class FirstKill implements StatListener {
 
+    @SuppressWarnings("unused")
     private MinigameFramework plugin;
+    @SuppressWarnings("unused")
     private boolean firstKillRegistered = false;
 
     public FirstKill(MinigameFramework plugin) {
@@ -48,6 +50,7 @@ public class FirstKill implements StatListener {
         }
     }
 
+    @SuppressWarnings("unused")
     @Override
     public void deregister() {
         EntityDamageByEntityEvent.getHandlerList().unregister(this);

@@ -65,7 +65,7 @@ public class KitManager implements Listener {
      * and it will place the entity on it for kit
      * representation.
      *
-     * Registers statlisteners for this class.
+     * Registers stat listeners for this class.
      */
     public void setupKits() {
 
@@ -100,7 +100,7 @@ public class KitManager implements Listener {
      * platforms entities stand on and the entities
      * themselves.
      *
-     * Unregister statlisteners for this class
+     * Unregister stat listeners for this class
      */
     public void destroyKits() {
         // Remove entities

@@ -80,14 +80,14 @@ public class GameArena extends BukkitRunnable implements Listener {
     }
 
     /**
-     * This will register statlisteners and setup the game arena.
+     * This will register stat listeners and setup the game arena.
      */
     void setupArena() {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     /**
-     * Here we will unregister statlisteners and destroy the game
+     * Here we will unregister stat listeners and destroy the game
      * arena.
      */
     void destroyArena() {

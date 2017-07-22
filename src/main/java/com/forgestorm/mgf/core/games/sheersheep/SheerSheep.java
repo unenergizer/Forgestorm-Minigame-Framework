@@ -32,9 +32,8 @@ import java.util.List;
  * without the prior written permission of the owner.
  */
 
+@SuppressWarnings("unused")
 public class SheerSheep extends Minigame {
-
-    private int maxScore = 80;
 
     public SheerSheep(MinigameFramework plugin) {
         super(plugin);
@@ -75,8 +74,6 @@ public class SheerSheep extends Minigame {
         return Bukkit.getWorld("mg-lobby");
     }
 
-    private Kit defaultKit, kit2;
-
     @Override
     public List<Kit> getKits() {
         List<Kit> kits = new ArrayList<>();
@@ -89,13 +86,13 @@ public class SheerSheep extends Minigame {
         kit2Desc.add("Knife them till the wool falls off!");
 
 
-        defaultKit = new Kit("Explosive Shears",
+        Kit defaultKit = new Kit("Explosive Shears",
                 ChatColor.GREEN,
                 EntityType.CHICKEN,
                 Material.STONE,
                 defaultKitDesc);
 
-        kit2 = new Kit("Knife Party",
+        Kit kit2 = new Kit("Knife Party",
                 ChatColor.GREEN,
                 EntityType.PIG,
                 Material.STONE,
@@ -138,6 +135,7 @@ public class SheerSheep extends Minigame {
         ArrayList<String> tips = new ArrayList<>();
         tips.add("Run around as fast as you can to shear the sheeps.");
         tips.add("Right click with your sheers to shear a sheep.");
+        int maxScore = 80;
         tips.add("The first person to get " + maxScore + " wool wins!");
         return tips;
     }

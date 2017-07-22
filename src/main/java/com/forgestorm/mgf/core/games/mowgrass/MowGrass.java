@@ -74,8 +74,6 @@ public class MowGrass extends Minigame {
         return Bukkit.getWorld("mg-lobby");
     }
 
-    private Kit defaultKit, kit2;
-
     @Override
     public List<Kit> getKits() {
         List<Kit> kits = new ArrayList<>();
@@ -87,13 +85,13 @@ public class MowGrass extends Minigame {
 
         kit2Desc.add("You got the mower, your fists!");
 
-        defaultKit = new Kit("Grass Puncher",
+        Kit defaultKit = new Kit("Grass Puncher",
                 ChatColor.GREEN,
                 EntityType.CHICKEN,
                 Material.STONE,
                 defaultKitDesc);
 
-        kit2 = new Kit("Mower",
+        Kit kit2 = new Kit("Mower",
                 ChatColor.GREEN,
                 EntityType.PIG,
                 Material.STONE,

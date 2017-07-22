@@ -25,6 +25,7 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
  * without the prior written permission of the owner.
  */
 
+@SuppressWarnings("unused")
 public class PickupItem implements StatListener {
 
     private MinigameFramework plugin;

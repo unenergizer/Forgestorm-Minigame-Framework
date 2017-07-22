@@ -72,7 +72,7 @@ public class TeamManager implements Listener {
      * on and it will place the entity on it for team
      * representation.
      * <p>
-     * Registers statlisteners for this class.
+     * Registers stat listeners for this class.
      */
     public void setupTeams() {
 
@@ -107,7 +107,7 @@ public class TeamManager implements Listener {
      * platforms entities stand on and the entities
      * themselves.
      * <p>
-     * Unregister statlisteners for this class
+     * Unregister stat listeners for this class
      */
     public void destroyTeams() {
         // Remove entities
