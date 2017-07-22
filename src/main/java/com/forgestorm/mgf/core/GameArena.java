@@ -7,6 +7,7 @@ import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.spigotcore.constants.CommonSounds;
 import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import com.forgestorm.spigotcore.util.item.ItemBuilder;
 import com.forgestorm.spigotcore.util.math.RandomChance;
@@ -28,6 +29,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -69,6 +71,7 @@ public class GameArena extends BukkitRunnable implements Listener {
     private int lastTeamSpawned = 0;
     @Setter
     private ArenaState arenaState = ArenaState.ARENA_WAITING;
+    private Location spectatorSpawn;
 
     GameArena(MinigameFramework plugin, GameManager gameManager, Minigame minigame, GameType gameType) {
         this.plugin = plugin;
@@ -93,6 +96,7 @@ public class GameArena extends BukkitRunnable implements Listener {
     void destroyArena() {
         // Unregister stat listeners
         BlockBreakEvent.getHandlerList().unregister(this);
+        EntityDamageEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
         PlayerMoveEvent.getHandlerList().unregister(this);
         PlayerKickEvent.getHandlerList().unregister(this);
@@ -145,8 +149,10 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param spectator The spectator to add.
      */
     public void addSpectator(Player spectator) {
-        // TODO: tp player to the spectator spawn position
         // TODO: Give the spectator the spectator menu
+
+        // Teleport player to the spectator spawn position
+        spectator.teleport(spectatorSpawn);
 
         // Set player as spectator in their profile.
         gameManager.getPlayerManager().getPlayerProfileData(spectator).setSpectator(true);
@@ -256,7 +262,20 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param worldData The worldData to use to get the YML path to the values needed.
      */
     void generateTeamSpawnLocations(WorldData worldData) {
-        ConfigurationSection innerSection = configuration.getConfigurationSection("Worlds." + worldData.getWorldIndex() + ".Teams");
+        String path = "Worlds." + worldData.getWorldIndex();
+
+        // Get spectator spawn location
+        String spectator = configuration.getString(path + ".Spectator");
+        String[] spectatorParts = spectator.split("/");
+        spectatorSpawn = new Location(
+                Bukkit.getWorld(worldData.getWorldName()),
+                Double.parseDouble(spectatorParts[0]),
+                Double.parseDouble(spectatorParts[1]),
+                Double.parseDouble(spectatorParts[2])
+        );
+
+        // Get team spawn locations.
+        ConfigurationSection innerSection = configuration.getConfigurationSection(path + ".Teams");
 
         // Loop through all teams
         for (String teamNumber : innerSection.getKeys(false)) {
@@ -270,7 +289,8 @@ public class GameArena extends BukkitRunnable implements Listener {
                         Bukkit.getWorld(worldData.getWorldName()),
                         Double.parseDouble(parts[0]),
                         Double.parseDouble(parts[1]),
-                        Double.parseDouble(parts[2])));
+                        Double.parseDouble(parts[2]))
+                );
             });
 
             // Add each team we find to the list.
@@ -365,7 +385,8 @@ public class GameArena extends BukkitRunnable implements Listener {
             countdown = maxCountdown;
 
             // TODO: Let the plugin know to start the core.
-            gameManager.getCurrentMinigame().setupGame();
+            minigame.initListeners();
+            minigame.setupGame();
         }
         countdown--;
     }
@@ -485,6 +506,33 @@ public class GameArena extends BukkitRunnable implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         if (arenaState == ArenaState.ARENA_TUTORIAL) event.setCancelled(true);
+    }
+
+    /**
+     * Here we listen for VOID damage. If a player jumps
+     * into the void, set them up as a spectator.
+     *
+     * @param event This is a Bukkit EntityDamageEvent.
+     */
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (event.getCause() != EntityDamageEvent.DamageCause.VOID) return;
+        if (!(event.getEntity() instanceof Player)) return;
+        Player player = (Player) event.getEntity();
+
+        // Cancel void damage.
+        event.setCancelled(true);
+
+        // Run on the next tick to prevent teleport bug.
+        new BukkitRunnable() {
+            public void run() {
+
+                addSpectator(player);
+                CommonSounds.ACTION_FAILED.playSound(player);
+
+                cancel();
+            }
+        }.runTaskLater(plugin, 1L);
     }
 
     @EventHandler

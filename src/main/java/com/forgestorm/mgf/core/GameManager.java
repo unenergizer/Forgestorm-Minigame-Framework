@@ -9,6 +9,7 @@ import com.forgestorm.mgf.core.world.WorldManager;
 import com.forgestorm.mgf.player.PlayerManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -57,6 +58,12 @@ public class GameManager extends BukkitRunnable {
 
         // Start world manager repeating task.
         worldManager.runTaskTimer(plugin, 0, 20);
+
+        // Clear any existing entities in the world.
+        for (LivingEntity entity : Bukkit.getWorlds().get(0).getLivingEntities()) {
+            if (entity instanceof Player) return;
+            entity.remove();
+        }
 
         // On first load, lets init our first game.
         selectGame();

@@ -52,6 +52,9 @@ public abstract class Minigame implements Listener {
 
     public Minigame(MinigameFramework plugin) {
         this.plugin = plugin;
+    }
+
+    public void initListeners() {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
