@@ -141,6 +141,13 @@ public class GameArena extends BukkitRunnable implements Listener {
         for (PotionEffect potionEffect : player.getActivePotionEffects()) {
             player.removePotionEffect(potionEffect.getType());
         }
+
+        // Clear inventory and armor
+        player.getInventory().clear();
+        player.getInventory().setHelmet(null);
+        player.getInventory().setChestplate(null);
+        player.getInventory().setLeggings(null);
+        player.getInventory().setBoots(null);
     }
 
     /**
@@ -217,6 +224,13 @@ public class GameArena extends BukkitRunnable implements Listener {
         spectator.setFlySpeed(.1f);
         spectator.setAllowFlight(false);
         spectator.setFlying(false);
+
+        // Clear inventory and armor
+        spectator.getInventory().clear();
+        spectator.getInventory().setHelmet(null);
+        spectator.getInventory().setChestplate(null);
+        spectator.getInventory().setLeggings(null);
+        spectator.getInventory().setBoots(null);
 
         // Remove spectator invisible potion effect
         for (PotionEffect potionEffect : spectator.getActivePotionEffects()) {
@@ -527,6 +541,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         new BukkitRunnable() {
             public void run() {
 
+                removeArenaPlayer(player);
                 addSpectator(player);
                 CommonSounds.ACTION_FAILED.playSound(player);
 

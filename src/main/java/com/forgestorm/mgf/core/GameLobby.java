@@ -160,6 +160,11 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         // Do teleport fix!
         teleportFix2.fixTeleport(player);
+
+        // Restore player inventory
+        if (playerMinigameData.getArmorContents() != null || playerMinigameData.getInventoryContents() != null) {
+            playerMinigameData.restoreInventoryContents();
+        }
     }
 
     /**
@@ -169,7 +174,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      *
      * @param player The player we will remove.
      */
-    public void removePlayer(Player player) {
+    public void removePlayer(Player player, boolean playerQuit) {
         // Remove the scoreboard.
         tarkanLobbyScoreboard.removePlayer(player);
 
@@ -178,6 +183,19 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         // Remove player double jump.
         doubleJump.removePlayer(player);
+
+        // Don't do the rest if the player is quitting.
+        if (playerQuit) return;
+
+        // Backup player inventory
+        gameManager.getPlayerManager().getPlayerProfileData(player).backupInventoryContents();
+
+        // Clear the inventory
+        player.getInventory().clear();
+        player.getInventory().setHelmet(null);
+        player.getInventory().setChestplate(null);
+        player.getInventory().setLeggings(null);
+        player.getInventory().setBoots(null);
     }
 
     /**
@@ -287,7 +305,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
     void removeAllPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
-            removePlayer(player);
+            removePlayer(player, false);
         }
     }
 

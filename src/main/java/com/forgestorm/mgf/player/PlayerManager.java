@@ -116,7 +116,7 @@ public class PlayerManager implements Listener {
 
             // Remove from the core lobby.
             GameLobby gameLobby = gameManager.getGameLobby();
-            gameLobby.removePlayer(player);
+            gameLobby.removePlayer(player, true);
             gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size() - 1);
             gameLobby.getTeamManager().playerQuit(player);
 

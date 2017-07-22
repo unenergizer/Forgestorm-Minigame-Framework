@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.UUID;
 
@@ -37,14 +38,32 @@ public class PlayerMinigameData {
     /**
      * DO NOT SAVE TO DATABASE
      */
+    private Player player;
     private UUID uuid;
     private Kit selectedKit;
     private Team selectedTeam;
     private Team queuedTeam;
     private boolean isSpectator = false;
     private Location arenaSpawnLocation;
+    private ItemStack[] inventoryContents;
+    private ItemStack[] armorContents;
 
     public PlayerMinigameData(Player player) {
+        this.player = player;
         uuid = player.getUniqueId();
+    }
+
+    public void backupInventoryContents() {
+        inventoryContents = player.getInventory().getContents();
+        armorContents = player.getInventory().getArmorContents();
+    }
+
+    public void restoreInventoryContents() {
+        if (inventoryContents != null) player.getInventory().setContents(inventoryContents);
+        if (armorContents != null) player.getInventory().setArmorContents(armorContents);
+
+        // Wipe the backup contents to prevent duping.
+        inventoryContents = null;
+        armorContents = null;
     }
 }
