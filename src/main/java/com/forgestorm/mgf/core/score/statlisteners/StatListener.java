@@ -1,20 +1,13 @@
-package com.forgestorm.mgf.core.kit;
+package com.forgestorm.mgf.core.score.statlisteners;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.entity.EntityType;
-
-import java.util.List;
+import org.bukkit.event.Listener;
 
 /*********************************************************************************
  *
  * OWNER: Robert Andrew Brown & Joseph Rugh
  * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
- * PROJECT: forgestorm-mgframework
- * DATE: 6/1/2017
+ * PROJECT: forgestorm-minigame-framework
+ * DATE: 6/22/2017
  * _______________________________________________________________________________
  *
  * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
@@ -25,13 +18,6 @@ import java.util.List;
  * without the prior written permission of the owner.
  */
 
-@Getter
-@Setter
-@AllArgsConstructor
-public class Kit {
-    private String kitName;
-    private ChatColor kitColor;
-    private EntityType kitEntityType;
-    private Material kitPlatformMaterials;
-    private List<String> kitDescription;
+public interface StatListener extends Listener {
+    void deregister();
 }

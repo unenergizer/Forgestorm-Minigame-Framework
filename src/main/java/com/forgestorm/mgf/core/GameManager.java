@@ -1,15 +1,19 @@
 package com.forgestorm.mgf.core;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.world.TeleportFix;
+import com.forgestorm.mgf.core.games.GameType;
+import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.score.ScoreManager;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.core.world.WorldManager;
 import com.forgestorm.mgf.player.PlayerManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /*********************************************************************************
@@ -34,7 +38,6 @@ public class GameManager extends BukkitRunnable {
     private final PlayerManager playerManager;
     private final WorldManager worldManager;
     private final List<String> gamesToPlay;
-    private final TeleportFix teleportFix;
     private GameLobby gameLobby;
     private GameArena gameArena;
     private GameType currentMinigameType;
@@ -45,40 +48,40 @@ public class GameManager extends BukkitRunnable {
     private WorldData currentArenaWorldData;
     private boolean currentArenaWorldLoaded = false;
     private boolean inLobby = true;
+    private ScoreManager scoreManager;
 
     public GameManager(MinigameFramework plugin) {
         this.plugin = plugin;
         this.playerManager = new PlayerManager(plugin, this);
         this.worldManager = new WorldManager(plugin);
         this.gamesToPlay = plugin.getConfigGameList();
-        this.teleportFix = new TeleportFix(plugin);
 
         // Start world manager repeating task.
         worldManager.runTaskTimer(plugin, 0, 20);
 
-        // On first load, lets init our first core.
+        // On first load, lets init our first game.
         selectGame();
     }
 
     /**
-     * This method is responsible for selecting which core is going to be played.
+     * This method is responsible for selecting which game is going to be played.
      * Games that will be played are assigned in the config file.
      */
     private void selectGame() {
         int totalGames = gamesToPlay.size() - 1;
 
-        // Basic core selection based on array list index.
+        // Basic game selection based on array list index.
         currentGameIndex++;
         if (currentGameIndex > totalGames) {
-            // Go back to first core.
+            // Go back to first game.
             currentGameIndex = 0;
         }
 
-        // Grab core selected.
+        // Grab game selected.
         currentMinigameType = GameType.valueOf(plugin.getConfigGameList().get(currentGameIndex));
         currentMinigame = currentMinigameType.getMinigame(plugin);
 
-        // Now setup the core!
+        // Now setup the game!
         setupGame();
     }
 
@@ -99,11 +102,15 @@ public class GameManager extends BukkitRunnable {
         gameLobby = new GameLobby(plugin, this, currentMinigame);
         gameLobby.setupLobby();
         gameLobby.setupAllPlayers();
+        gameLobby.resetPlayerScoreboards();
         gameLobby.runTaskTimer(plugin, 0, 20);
 
         // Create Arena
         gameArena = new GameArena(plugin, this, currentMinigame, currentMinigameType);
         gameArena.runTaskTimer(plugin, 0, 20);
+
+        // Setup the score manager.
+        scoreManager = new ScoreManager();
 
         // Load arena world
         WorldData worldToLoad = gameArena.getRandomArenaWorld();
@@ -117,7 +124,7 @@ public class GameManager extends BukkitRunnable {
             // An arena world has not been loaded. Lets do that now.
             worldManager.getWorld(currentArenaWorldData = worldToLoad);
 
-        } else if (currentArenaWorldData != null && !currentArenaWorldData.getWorldName().equals(worldToLoad.getWorldName())) {
+        } else if (!currentArenaWorldData.getWorldName().equals(worldToLoad.getWorldName())) {
             // Unload the previous arena world.
             worldManager.unloadWorld(currentArenaWorldData);
 
@@ -127,7 +134,7 @@ public class GameManager extends BukkitRunnable {
     }
 
     /**
-     * Called when a core is ready to be started. From here
+     * Called when a game is ready to be started. From here
      * we will teleport all the players into the arena and
      * do the proper countdowns.
      */
@@ -142,6 +149,17 @@ public class GameManager extends BukkitRunnable {
         gameArena.setupArena();
         gameArena.addAllArenaPlayers();
         gameArena.showTutorialInfo();
+
+        // Build stat type lists for scores.
+        List<Player> players = new ArrayList<>();
+        Bukkit.getOnlinePlayers().forEach(player -> {
+            if (player.hasMetadata("NPC")) return;
+            if (!playerManager.getPlayerProfileData(player).isSpectator()) {
+                System.out.println("DEBUG!!!: PLAYER BEING ADDED TO LIST: " + player.getName());
+                players.add(player);
+            }
+        });
+        scoreManager.initStats(players, currentMinigame.getStatTypes(), plugin);
     }
 
     /**
@@ -151,10 +169,10 @@ public class GameManager extends BukkitRunnable {
      * @param startNewGame True if a new game should be
      *                     started. False otherwise.
      */
+    @SuppressWarnings("WeakerAccess")
     public void endGame(boolean startNewGame) {
 
         // Disable the lobby and the arena
-        gameLobby.destroyLobby();
         gameArena.destroyArena();
 
         // Remove players
@@ -166,6 +184,12 @@ public class GameManager extends BukkitRunnable {
             gameArena.removeAllArenaPlayers();
             gameArena.removeAllArenaSpectators();
         }
+
+        // Update database
+        scoreManager.updateDatabase();
+
+        // Unregister stat stat listeners.
+        scoreManager.deregisterListeners();
 
         // Determines if a new game should start.
         // Typically if the server is shutting down or
@@ -182,7 +206,6 @@ public class GameManager extends BukkitRunnable {
         endGame(false);
 
         playerManager.onDisable();
-        teleportFix.onDisable();
     }
 
     @Override

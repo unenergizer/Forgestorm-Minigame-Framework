@@ -2,15 +2,16 @@ package com.forgestorm.mgf.core.kit;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
+import com.forgestorm.mgf.constants.PedestalLocations;
 import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
-import com.forgestorm.mgf.util.world.LocationUtil;
+import com.forgestorm.mgf.util.world.PedestalMapping;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
 import com.forgestorm.spigotcore.util.text.CenterChatText;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -19,6 +20,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,12 +48,15 @@ public class KitManager implements Listener {
     private final List<Kit> kitsList;
     private final GameManager gameManager;
     private final Map<Entity, Kit> kitEntities = new HashMap<>();
+    private final World lobbyWorld;
+    private final List<PedestalLocations> pedestalLocations = new ArrayList<>();
 
-    public KitManager(MinigameFramework plugin, GameManager gameManager, PlatformBuilder platformBuilder, List<Kit> kitsList) {
+    public KitManager(MinigameFramework plugin, GameManager gameManager, PlatformBuilder platformBuilder, List<Kit> kitsList, World lobbyWorld) {
         this.plugin = plugin;
         this.platformBuilder = platformBuilder;
         this.kitsList = kitsList;
         this.gameManager = gameManager;
+        this.lobbyWorld = lobbyWorld;
     }
 
     /**
@@ -60,15 +65,29 @@ public class KitManager implements Listener {
      * and it will place the entity on it for kit
      * representation.
      *
-     * Registers listeners for this class.
+     * Registers statlisteners for this class.
      */
     public void setupKits() {
-        for (Kit kit : kitsList) {
-            // spawn platforms
-            platformBuilder.setPlatform(kit.getKitPlatformLocation(), kit.getKitPlatformMaterials());
 
-            // spawn entities
-            spawnEntity(kit);
+        // Determine the number of kits and get the center pedestal locations appropriately.
+        PedestalMapping pedestalMapping = new PedestalMapping();
+        int shiftOver = pedestalMapping.getShiftAmount(kitsList.size());
+
+        int kitsSpawned = 0;
+
+        // Spawn the kits
+        for (Kit kit : kitsList) {
+            // Get platform location
+            PedestalLocations pedLoc = PedestalLocations.values()[shiftOver + kitsSpawned];
+            pedestalLocations.add(pedLoc);
+
+            // Spawn platform
+            platformBuilder.setPlatform(lobbyWorld, pedLoc, kit.getKitPlatformMaterials());
+
+            // Spawn entities
+            spawnEntity(kit, pedLoc);
+
+            kitsSpawned++;
         }
 
         // Register Listeners
@@ -81,7 +100,7 @@ public class KitManager implements Listener {
      * platforms entities stand on and the entities
      * themselves.
      *
-     * Unregister listeners for this class
+     * Unregister statlisteners for this class
      */
     public void destroyKits() {
         // Remove entities
@@ -90,9 +109,7 @@ public class KitManager implements Listener {
         }
 
         // Remove platforms
-        for (Kit kit : kitsList) {
-            platformBuilder.setPlatform(kit.getKitPlatformLocation(), Material.AIR);
-        }
+        platformBuilder.clearPlatform(lobbyWorld, pedestalLocations);
 
         // Unregister Listeners
         PlayerInteractAtEntityEvent.getHandlerList().unregister(this);
@@ -158,14 +175,12 @@ public class KitManager implements Listener {
      *
      * @param kit The kit we are spawning an entity for.
      */
-    private void spawnEntity(Kit kit) {
-        // Grab the center location for the entity to spawn at.
-        Location centerLocation = LocationUtil.getCenterLocation(
-                kit.getKitPlatformLocation().get(0),
-                kit.getKitPlatformLocation().get(1));
+    private void spawnEntity(Kit kit, PedestalLocations pedLoc) {
+
+        Location entityLocation = pedLoc.getLocation(lobbyWorld).add(.5, 1.5, .5);
 
         // Generate and spawn the entity.
-        LivingEntity entity = (LivingEntity) centerLocation.getWorld().spawnEntity(centerLocation, kit.getKitEntityType());
+        LivingEntity entity = (LivingEntity) lobbyWorld.spawnEntity(entityLocation, kit.getKitEntityType());
 
         entity.setCustomName(kit.getKitColor() + kit.getKitName());
         entity.setCustomNameVisible(true);
@@ -173,6 +188,9 @@ public class KitManager implements Listener {
         entity.setCanPickupItems(false);
         entity.setCollidable(false);
         entity.setAI(false);
+
+        // Fix to make mobs face the correct direction.
+        entity.teleport(entityLocation);
 
         // Add the kit selection entities UUID's to an array list.
         // This is used to keep track of which one is being clicked for kit selection.

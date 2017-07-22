@@ -1,8 +1,8 @@
-package com.forgestorm.mgf.core;
+package com.forgestorm.mgf.core.games;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.games.testgame.TestGame;
-import com.forgestorm.mgf.core.games.testgametwo.TestGame2;
+import com.forgestorm.mgf.core.games.sheersheep.SheerSheep;
+import com.forgestorm.mgf.core.games.mowgrass.MowGrass;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -24,8 +24,8 @@ import java.lang.reflect.InvocationTargetException;
 
 public enum GameType {
 
-    TEST_GAME(TestGame.class, "Test Game"), //MapSHEEP01
-    TEST_GAME2(TestGame2.class, "Test Game2");
+    SHEER_SHEEP(SheerSheep.class, "Sheer Sheep"),
+    MOW_GRASS(MowGrass.class, "Mow Grass");
 
     private Class<? extends Minigame> clazz;
     private String friendlyName;

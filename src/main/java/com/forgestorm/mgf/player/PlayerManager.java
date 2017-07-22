@@ -40,7 +40,7 @@ public class PlayerManager implements Listener {
     public PlayerManager(MinigameFramework plugin, GameManager gameManager) {
         this.gameManager = gameManager;
 
-        // Register the PlayerManager event listeners.
+        // Register the PlayerManager event statlisteners.
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
         // If server reloaded, lets create a profile for all the online players.

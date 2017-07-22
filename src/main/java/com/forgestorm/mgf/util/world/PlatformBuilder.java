@@ -1,7 +1,9 @@
 package com.forgestorm.mgf.util.world;
 
+import com.forgestorm.mgf.constants.PedestalLocations;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.util.List;
@@ -31,6 +33,7 @@ public class PlatformBuilder {
      *                          the platform.
      * @param material          The material to set at the location.
      */
+    @Deprecated
     public void setPlatform(List<Location> platformLocations, Material material) {
         Location loc1 = platformLocations.get(0);
         Location loc2 = platformLocations.get(1);
@@ -49,6 +52,37 @@ public class PlatformBuilder {
                     block.setType(material);
                 }
             }
+        }
+    }
+
+    /**
+     * This will create the pedestal platform for an entity to stand on.
+     *
+     * @param world    The world to place the pedestal in.
+     * @param location The location or xyz coordinate to place the block.
+     * @param material The material to set as the platform.
+     */
+    public void setPlatform(World world, PedestalLocations location, Material material) {
+        Block block = location.getLocation(world).getBlock();
+        block.setType(material);
+
+        Block slab = location.getLocation(world).add(0, 1, 0).getBlock();
+        slab.setType(Material.STEP);
+    }
+
+    /**
+     * This will remove the pedestal platform from the lobby world.
+     *
+     * @param world             The world to remove the pedestal from.
+     * @param pedestalLocations The location of the pedestal
+     */
+    public void clearPlatform(World world, List<PedestalLocations> pedestalLocations) {
+        for (PedestalLocations pedLocs : pedestalLocations) {
+            Block block = pedLocs.getLocation(world).getBlock();
+            block.setType(Material.AIR);
+
+            Block slab = pedLocs.getLocation(world).add(0, 1, 0).getBlock();
+            slab.setType(Material.AIR);
         }
     }
 }

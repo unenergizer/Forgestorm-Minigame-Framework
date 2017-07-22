@@ -2,17 +2,18 @@ package com.forgestorm.mgf.core.team;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
+import com.forgestorm.mgf.constants.PedestalLocations;
 import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.util.world.PedestalMapping;
 import com.forgestorm.mgf.player.PlayerMinigameData;
-import com.forgestorm.mgf.util.world.LocationUtil;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
 import com.forgestorm.spigotcore.util.display.Hologram;
 import com.forgestorm.spigotcore.util.text.CenterChatText;
 import lombok.Getter;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -54,12 +55,15 @@ public class TeamManager implements Listener {
     private final List<Team> teamsList;
     private final Map<Entity, Team> teamEntities = new HashMap<>();
     private final Map<Team, Hologram> teamHolograms = new HashMap<>();
+    private final World lobbyWorld;
+    private final List<PedestalLocations> pedestalLocations = new ArrayList<>();
 
-    public TeamManager(MinigameFramework plugin, GameManager gameManager, PlatformBuilder platformBuilder, List<Team> teamsList) {
+    public TeamManager(MinigameFramework plugin, GameManager gameManager, PlatformBuilder platformBuilder, List<Team> teamsList, World lobbyWorld) {
         this.plugin = plugin;
         this.gameManager = gameManager;
         this.platformBuilder = platformBuilder;
         this.teamsList = teamsList;
+        this.lobbyWorld = lobbyWorld;
     }
 
     /**
@@ -68,15 +72,29 @@ public class TeamManager implements Listener {
      * on and it will place the entity on it for team
      * representation.
      * <p>
-     * Registers listeners for this class.
+     * Registers statlisteners for this class.
      */
     public void setupTeams() {
-        for (Team team : teamsList) {
-            // spawn platforms
-            platformBuilder.setPlatform(team.getTeamPlatformLocations(), team.getTeamPlatformMaterials());
 
-            // spawn entities
-            spawnEntity(team);
+        // Determine the number of teams and get the center pedestal locations appropriately.
+        PedestalMapping pedestalMapping = new PedestalMapping();
+        int shiftOver = pedestalMapping.getShiftAmount(teamsList.size());
+
+        int teamsSpawned = 0;
+
+        // Spawn the teams
+        for (Team team : teamsList) {
+            // Get platform location
+            PedestalLocations pedLoc = PedestalLocations.values()[9 + shiftOver + teamsSpawned];
+            pedestalLocations.add(pedLoc);
+
+            // Spawn the platform
+            platformBuilder.setPlatform(lobbyWorld, pedLoc, team.getTeamPlatformMaterials());
+
+            // Spawn entities
+            spawnEntity(team, pedLoc);
+
+            teamsSpawned++;
         }
 
         // Register Listeners
@@ -89,7 +107,7 @@ public class TeamManager implements Listener {
      * platforms entities stand on and the entities
      * themselves.
      * <p>
-     * Unregister listeners for this class
+     * Unregister statlisteners for this class
      */
     public void destroyTeams() {
         // Remove entities
@@ -98,9 +116,7 @@ public class TeamManager implements Listener {
         }
 
         // Remove platforms
-        for (Team team : teamsList) {
-            platformBuilder.setPlatform(team.getTeamPlatformLocations(), Material.AIR);
-        }
+        platformBuilder.clearPlatform(lobbyWorld, pedestalLocations);
 
         // Remove Holograms
         Iterator<Hologram> hologramIterator = teamHolograms.values().iterator();
@@ -396,14 +412,12 @@ public class TeamManager implements Listener {
      *
      * @param team The team we are spawning an entity for.
      */
-    private void spawnEntity(Team team) {
-        // Grab the center location for the entity to spawn at.
-        Location centerLocation = LocationUtil.getCenterLocation(
-                team.getTeamPlatformLocations().get(0),
-                team.getTeamPlatformLocations().get(1));
+    private void spawnEntity(Team team, PedestalLocations pedLoc) {
+
+        Location entityLocation = pedLoc.getLocation(lobbyWorld).add(.5, 1.5, .5);
 
         // Generate and spawn the entity.
-        LivingEntity entity = (LivingEntity) centerLocation.getWorld().spawnEntity(centerLocation, team.getTeamEntityType());
+        LivingEntity entity = (LivingEntity) lobbyWorld.spawnEntity(entityLocation, team.getTeamEntityType());
 
         entity.setCustomName(team.getTeamColor() + team.getTeamName());
         entity.setCustomNameVisible(true);
@@ -412,12 +426,15 @@ public class TeamManager implements Listener {
         entity.setCollidable(false);
         entity.setAI(false);
 
+        // Fix to make mobs face the correct direction.
+        entity.teleport(entityLocation);
+
         // Add the team selection entities UUID's to an array list.
         // This is used to keep track of which one is being clicked for team selection.
         teamEntities.put(entity, team);
 
         // Spawn holograms
-        spawnHolograms(team, centerLocation);
+        spawnHolograms(team, entityLocation);
     }
 
     @EventHandler

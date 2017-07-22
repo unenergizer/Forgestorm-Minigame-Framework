@@ -2,12 +2,15 @@ package com.forgestorm.mgf.core;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
+import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.kit.KitManager;
 import com.forgestorm.mgf.core.scoreboard.TarkanLobbyScoreboard;
 import com.forgestorm.mgf.core.team.TeamManager;
+import com.forgestorm.mgf.core.world.TeleportFix2;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.mgf.util.display.TipAnnouncer;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
+import com.forgestorm.spigotcore.events.UpdateScoreboardEvent;
 import com.forgestorm.spigotcore.player.DoubleJump;
 import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import lombok.Getter;
@@ -66,6 +69,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
     private boolean countdownStarted = false;
     private final int maxCountdown = 30;
     private int countdown = maxCountdown;
+    private TeleportFix2 teleportFix2 = new TeleportFix2();
 
     GameLobby(MinigameFramework plugin, GameManager gameManager, Minigame minigame) {
         this.plugin = plugin;
@@ -81,11 +85,11 @@ public class GameLobby extends BukkitRunnable implements Listener {
     void setupLobby() {
 
         // Kit Setup
-        kitManager = new KitManager(plugin, gameManager, platformBuilder, minigame.getKits());
+        kitManager = new KitManager(plugin, gameManager, platformBuilder, minigame.getKits(), minigame.getLobbyWorld());
         kitManager.setupKits();
 
         // Team Setup
-        teamManager = new TeamManager(plugin, gameManager, platformBuilder, minigame.getTeams());
+        teamManager = new TeamManager(plugin, gameManager, platformBuilder, minigame.getTeams(), minigame.getLobbyWorld());
         teamManager.setupTeams();
 
         // Display core tips
@@ -115,7 +119,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
         // Stop core play tips.
         tipAnnouncer.setShowTips(false);
 
-        // Unregister listeners
+        // Unregister stat listeners
         EntityCombustEvent.getHandlerList().unregister(this);
         EntityDamageEvent.getHandlerList().unregister(this);
         FoodLevelChangeEvent.getHandlerList().unregister(this);
@@ -153,6 +157,9 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         // Setup player for double jump.
         doubleJump.setupPlayer(player);
+
+        // Do teleport fix!
+        teleportFix2.fixTeleport(player);
     }
 
     /**
@@ -171,6 +178,21 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         // Remove player double jump.
         doubleJump.removePlayer(player);
+    }
+
+    /**
+     * This will reset all of the players scoreboards.
+     * This is done after players have been assigned a
+     * kit and a team.
+     */
+    void resetPlayerScoreboards() {
+        // Reset all player scoreboards.  This must be done after
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
+
+            // Setup the player scoreboard.
+            Bukkit.getPluginManager().callEvent(new UpdateScoreboardEvent(player));
+        }
     }
 
     /**
@@ -203,6 +225,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
                 String message = MinigameMessages.GAME_TIME_REMAINING_PLURAL.toString();
 
                 for (Player players: Bukkit.getOnlinePlayers()) {
+                    if (players.hasMetadata("NPC")) return;
                     plugin.getTitleManagerAPI().sendActionbar(players, message.replace("%s", Integer.toString(countdown)));
                     players.playSound(players.getLocation(), Sound.BLOCK_NOTE_PLING, 1f, 1f);
                 }
@@ -211,6 +234,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
                 String message = MinigameMessages.GAME_TIME_REMAINING_SINGULAR.toString();
 
                 for (Player players: Bukkit.getOnlinePlayers()) {
+                    if (players.hasMetadata("NPC")) return;
                     plugin.getTitleManagerAPI().sendActionbar(players, message);
                     players.playSound(players.getLocation(), Sound.BLOCK_NOTE_HARP, 1f, 1f);
                 }
@@ -225,7 +249,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
             // If the countdown message does not equal the maxCountdown time,
             // then it is safe to assume that a countdown started, but then a
-            // player left the core, thus stopping the countdown. Since this
+            // player left the server, thus stopping the countdown. Since this
             // happened, lets reset the countdown!
             if (countdown != maxCountdown) {
                 // Reset defaults
@@ -235,6 +259,8 @@ public class GameLobby extends BukkitRunnable implements Listener {
                 // Send countdown fail message.
                 String message = MinigameMessages.GAME_COUNTDOWN_NOT_ENOUGH_PLAYERS.toString();
                 for (Player players: Bukkit.getOnlinePlayers()) {
+                    if (players.hasMetadata("NPC")) return;
+
                     //Show message
                     plugin.getTitleManagerAPI().sendActionbar(players, message);
 
@@ -250,6 +276,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      */
     void setupAllPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
             setupPlayer(player);
         }
     }
@@ -259,10 +286,17 @@ public class GameLobby extends BukkitRunnable implements Listener {
      */
     void removeAllPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
             removePlayer(player);
         }
     }
 
+    /**
+     * Called when a player jumps into the void or into a end portal.
+     * This will send them back to the main spawn position.
+     *
+     * @param player The player to teleport.
+     */
     private void sendToSpawn(Player player) {
         //Teleport the player.
         player.teleport(spawn);

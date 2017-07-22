@@ -19,6 +19,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
+/*********************************************************************************
+ *
+ * OWNER: Robert Andrew Brown & Joseph Rugh
+ * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
+ * PROJECT: forgestorm-minigame-framework
+ * DATE: 6/2/2017
+ * _______________________________________________________________________________
+ *
+ * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
+ *
+ * No part of this project and/or code and/or source code and/or source may be
+ * reproduced, distributed, or transmitted in any form or by any means,
+ * including photocopying, recording, or other electronic or mechanical methods,
+ * without the prior written permission of the owner.
+ */
 
 public class TarkanLobbyScoreboard implements Listener {
 
@@ -27,6 +42,7 @@ public class TarkanLobbyScoreboard implements Listener {
     private final GameManager gameManager;
     private final GameLobby gameLobby;
     private final TitleManagerAPI titleManagerAPI;
+    //private final Animation animation;
     private int gameWaitingAnimate = 1;
 
 
@@ -36,6 +52,7 @@ public class TarkanLobbyScoreboard implements Listener {
         this.gameLobby = gameLobby;
         spigotCore = plugin.getSpigotCore();
         titleManagerAPI = plugin.getTitleManagerAPI();
+        //animation = titleManagerAPI.getRegisteredAnimations().get("scoreboard-title");
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -45,13 +62,20 @@ public class TarkanLobbyScoreboard implements Listener {
      *
      * @param player The player that will receive a scoreboard.
      */
-    public void addPlayer(Player player) {
+    private void addPlayer(Player player) {
         // Tarkan board setup
         titleManagerAPI.giveScoreboard(player);
 
         //Setup player's scoreboard.
         setBoardData(player);
         updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
+
+        // Set scoreboard title
+        titleManagerAPI.setScoreboardTitle(player, SpigotCoreMessages.SCOREBOARD_TITLE.toString());
+
+//        SendableAnimation sendableAnimation = titleManagerAPI.toScoreboardTitleAnimation(animation, player, false);
+//        sendableAnimation.setContinuous(true);
+//        sendableAnimation.start();
     }
 
     /**
@@ -60,6 +84,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param player The player that will have their scoreboard removed.
      */
     public void removePlayer(Player player) {
+        if (!titleManagerAPI.hasScoreboard(player)) return;
         titleManagerAPI.removeScoreboard(player);
     }
 
@@ -74,6 +99,7 @@ public class TarkanLobbyScoreboard implements Listener {
     public void updatePlayerCountAndGameStatus(int currentPlayers) {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
             String maxPlayers = Integer.toString(gameManager.getMaxPlayersOnline());
 
             // Game status
@@ -91,6 +117,12 @@ public class TarkanLobbyScoreboard implements Listener {
         }
     }
 
+    /**
+     * Updates the scoreboard with the players new Kit selection.
+     *
+     * @param player             The player who's scoreboard we will update.
+     * @param playerMinigameData The players minigame data that contains the new kit they clicked.
+     */
     public void updatePlayerKit(Player player, PlayerMinigameData playerMinigameData) {
         Kit kit = playerMinigameData.getSelectedKit();
         String kitName = kit.getKitColor() + kit.getKitName();
@@ -98,6 +130,12 @@ public class TarkanLobbyScoreboard implements Listener {
                 kitName));
     }
 
+    /**
+     * Updates the scoreboard with the players new Team selection.
+     *
+     * @param player             The player who's scoreboard we will update.
+     * @param playerMinigameData The players minigame data that contains the new team they clicked.
+     */
     public void updatePlayerTeam(Player player, PlayerMinigameData playerMinigameData) {
         Team team = playerMinigameData.getSelectedTeam();
         String teamName = team.getTeamColor() + team.getTeamName();
@@ -114,9 +152,6 @@ public class TarkanLobbyScoreboard implements Listener {
         PlayerProfileData playerProfileData = spigotCore.getProfileManager().getProfile(player);
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
         String gameName = gameManager.getCurrentMinigameType().getFriendlyName();
-
-        // Set scoreboard title
-        titleManagerAPI.setScoreboardTitle(player, SpigotCoreMessages.SCOREBOARD_TITLE.toString());
 
         // Blank line 1
         titleManagerAPI.setScoreboardValue(player, 1, SpigotCoreMessages.SCOREBOARD_BLANK_LINE_1.toString());
@@ -165,8 +200,9 @@ public class TarkanLobbyScoreboard implements Listener {
         titleManagerAPI.setScoreboardValue(player, 12, MinigameMessages.TSB_BLANK_LINE_4.toString());
 
         // SERVER
-        titleManagerAPI.setScoreboardValue(player, 13, SpigotCoreMessages.SCOREBOARD_SERVER.toString() +
-                plugin.getServer().getServerName());
+        titleManagerAPI.setScoreboardValue(player, 13, SpigotCoreMessages.SCOREBOARD_SERVER.toString());
+
+        titleManagerAPI.setScoreboardValue(player, 14, plugin.getServer().getServerName());
     }
 
     /**
@@ -204,6 +240,7 @@ public class TarkanLobbyScoreboard implements Listener {
 
         // Loop through player list and update all players with new animation.
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
 
             // Make sure the player has the scoreboard.
             if (!titleManagerAPI.hasScoreboard(player)) {
@@ -212,8 +249,10 @@ public class TarkanLobbyScoreboard implements Listener {
 
             // Update game countdown
             if (gameLobby.isCountdownStarted() && gameLobby.getCountdown() <= 20) {
-                String msg = ChatColor.GREEN + "Starting in " + ChatColor.DARK_AQUA + gameLobby.getCountdown();
-                titleManagerAPI.setScoreboardValue(player, 3, msg);
+                String msg = MinigameMessages.TSB_STATUS.toString() + ChatColor.GREEN + "Starting in " + ChatColor.YELLOW + gameLobby.getCountdown();
+                titleManagerAPI.setScoreboardValue(player, 7, msg);
+            } else {
+                updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
             }
         }
     }

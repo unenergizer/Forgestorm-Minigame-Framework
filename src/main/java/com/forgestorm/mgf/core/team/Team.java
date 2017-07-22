@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -44,5 +43,4 @@ public class Team {
     private EntityType teamEntityType;
     private Material teamPlatformMaterials;
     private List<String> teamDescription;
-    private List<Location> teamPlatformLocations;
 }

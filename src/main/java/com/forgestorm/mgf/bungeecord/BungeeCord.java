@@ -16,6 +16,22 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.util.logging.Logger;
 
+/*********************************************************************************
+ *
+ * OWNER: Robert Andrew Brown & Joseph Rugh
+ * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
+ * PROJECT: forgestorm-minigame-framework
+ * DATE: 6/2/2017
+ * _______________________________________________________________________________
+ *
+ * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
+ *
+ * No part of this project and/or code and/or source code and/or source may be
+ * reproduced, distributed, or transmitted in any form or by any means,
+ * including photocopying, recording, or other electronic or mechanical methods,
+ * without the prior written permission of the owner.
+ */
+
 public class BungeeCord implements PluginMessageListener, Listener {
 	
 	private final MinigameFramework plugin;

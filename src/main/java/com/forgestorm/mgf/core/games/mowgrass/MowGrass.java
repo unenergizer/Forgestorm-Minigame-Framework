@@ -1,12 +1,12 @@
-package com.forgestorm.mgf.core.games.testgametwo;
+package com.forgestorm.mgf.core.games.mowgrass;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.Minigame;
+import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
@@ -32,29 +32,30 @@ import java.util.List;
  * without the prior written permission of the owner.
  */
 
-public class TestGame2 extends Minigame {
+public class MowGrass extends Minigame {
 
-    public TestGame2(MinigameFramework plugin) {
+    public MowGrass(MinigameFramework plugin) {
         super(plugin);
     }
 
     @Override
-    public void startGame() {
+    public void setupGame() {
         initGame();
     }
 
     @Override
-    public void stopGame() {
-        // unregister listeners
+    public void disableGame() {
+        // TODO: Do game ending code here.
     }
 
     private void initGame() {
         new BukkitRunnable() {
-            int countdown = 10;
+            int countdown = 30;
 
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (player.hasMetadata("NPC")) return;
                     player.sendMessage("Game ends in: " + countdown + " seconds.");
                 }
 
@@ -67,41 +68,36 @@ public class TestGame2 extends Minigame {
         }.runTaskTimer(plugin, 0, 20);
     }
 
+
+    @Override
+    public World getLobbyWorld() {
+        return Bukkit.getWorld("mg-lobby");
+    }
+
     private Kit defaultKit, kit2;
 
     @Override
     public List<Kit> getKits() {
-        World world = Bukkit.getWorld("mg-lobby");
         List<Kit> kits = new ArrayList<>();
         List<String> defaultKitDesc = new ArrayList<>();
         List<String> kit2Desc = new ArrayList<>();
-        List<Location> loc1 = new ArrayList<>();
-        List<Location> loc2 = new ArrayList<>();
 
         defaultKitDesc.add("All you really need is a lawn mower.");
         defaultKitDesc.add("But you don't get one. Use your hands!");
 
         kit2Desc.add("You got the mower, your fists!");
 
-        loc1.add(new Location(world, -1, 73, -17));
-        loc1.add(new Location(world, 0, 73, -16));
-
-        loc2.add(new Location(world, 3, 73, -17));
-        loc2.add(new Location(world, 2, 73, -16));
-
         defaultKit = new Kit("Grass Puncher",
                 ChatColor.GREEN,
                 EntityType.CHICKEN,
-                Material.DIRT,
-                defaultKitDesc,
-                loc1);
+                Material.STONE,
+                defaultKitDesc);
 
         kit2 = new Kit("Mower",
                 ChatColor.GREEN,
                 EntityType.PIG,
-                Material.GRASS,
-                kit2Desc,
-                loc2);
+                Material.STONE,
+                kit2Desc);
 
         kits.add(defaultKit);
         kits.add(kit2);
@@ -112,13 +108,8 @@ public class TestGame2 extends Minigame {
     @Override
     public List<Team> getTeams() {
         List<String> description = new ArrayList<>();
-        description.add("Mow the grass or your dad's going to be pissed...");
+        description.add("Cut the grass or your dad's going to be pissed...");
         description.add("So mow that brush you dirty animal!");
-
-        ArrayList<Location> platformLocations = new ArrayList<>();
-        World world = Bukkit.getWorld("mg-lobby");
-        platformLocations.add(new Location(world, 1, 72, 14));
-        platformLocations.add(new Location(world, 0, 72, 13));
 
         List<Team> team = new ArrayList<>();
         team.add(new Team(
@@ -127,10 +118,16 @@ public class TestGame2 extends Minigame {
                 ChatColor.GREEN,
                 -1,
                 EntityType.SHEEP,
-                Material.BOOKSHELF,
-                description,
-                platformLocations));
+                Material.STONE,
+                description));
         return team;
+    }
+
+    @Override
+    public List<StatType> getStatTypes() {
+        List<StatType> statTypes = new ArrayList<>();
+        statTypes.add(StatType.FIRST_KILL);
+        return statTypes;
     }
 
     @Override

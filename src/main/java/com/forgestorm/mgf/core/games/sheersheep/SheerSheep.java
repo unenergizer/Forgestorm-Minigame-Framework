@@ -1,12 +1,12 @@
-package com.forgestorm.mgf.core.games.testgame;
+package com.forgestorm.mgf.core.games.sheersheep;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.Minigame;
+import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
@@ -32,29 +32,32 @@ import java.util.List;
  * without the prior written permission of the owner.
  */
 
-public class TestGame extends Minigame {
+public class SheerSheep extends Minigame {
 
-    public TestGame(MinigameFramework plugin) {
+    private int maxScore = 80;
+
+    public SheerSheep(MinigameFramework plugin) {
         super(plugin);
     }
 
     @Override
-    public void startGame() {
+    public void setupGame() {
         initGame();
     }
 
     @Override
-    public void stopGame() {
-        // Unregister listeners
+    public void disableGame() {
+        // TODO: Do game ending code here.
     }
 
     private void initGame() {
         new BukkitRunnable() {
-            int countdown = 10;
+            int countdown = 30;
 
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (player.hasMetadata("NPC")) return;
                     player.sendMessage("Game ends in: " + countdown + " seconds.");
                 }
 
@@ -67,41 +70,36 @@ public class TestGame extends Minigame {
         }.runTaskTimer(plugin, 0, 20);
     }
 
+    @Override
+    public World getLobbyWorld() {
+        return Bukkit.getWorld("mg-lobby");
+    }
+
     private Kit defaultKit, kit2;
 
     @Override
     public List<Kit> getKits() {
-        World world = Bukkit.getWorld("mg-lobby");
         List<Kit> kits = new ArrayList<>();
         List<String> defaultKitDesc = new ArrayList<>();
         List<String> kit2Desc = new ArrayList<>();
-        List<Location> loc1 = new ArrayList<>();
-        List<Location> loc2 = new ArrayList<>();
 
-        defaultKitDesc.add("All you really need is a lawn mower.");
-        defaultKitDesc.add("But you don't get one. Use your hands!");
+        defaultKitDesc.add("Blow up them sheeps!");
+        defaultKitDesc.add("Get as much wool as you can!");
 
-        kit2Desc.add("You got the mower, your fists!");
+        kit2Desc.add("Knife them till the wool falls off!");
 
-        loc1.add(new Location(world, -1, 73, -17));
-        loc1.add(new Location(world, 0, 73, -16));
 
-        loc2.add(new Location(world, 3, 73, -17));
-        loc2.add(new Location(world, 2, 73, -16));
-
-        defaultKit = new Kit("Grass Puncher",
+        defaultKit = new Kit("Explosive Shears",
                 ChatColor.GREEN,
                 EntityType.CHICKEN,
-                Material.DIRT,
-                defaultKitDesc,
-                loc1);
+                Material.STONE,
+                defaultKitDesc);
 
-        kit2 = new Kit("Mower",
+        kit2 = new Kit("Knife Party",
                 ChatColor.GREEN,
                 EntityType.PIG,
-                Material.GRASS,
-                kit2Desc,
-                loc2);
+                Material.STONE,
+                kit2Desc);
 
         kits.add(defaultKit);
         kits.add(kit2);
@@ -112,42 +110,44 @@ public class TestGame extends Minigame {
     @Override
     public List<Team> getTeams() {
         List<String> description = new ArrayList<>();
-        description.add("Mow the grass or your dad's going to be pissed...");
-        description.add("So mow that brush you dirty animal!");
+        description.add("Every player from themselves!!");
+        description.add("Compete to be the best!");
 
-        ArrayList<Location> platformLocations = new ArrayList<>();
-        World world = Bukkit.getWorld("mg-lobby");
-        platformLocations.add(new Location(world, 1, 72, 14));
-        platformLocations.add(new Location(world, 0, 72, 13));
 
         List<Team> team = new ArrayList<>();
         team.add(new Team(
                 0,
-                "Brush Bandits",
+                "Individual Team",
                 ChatColor.GREEN,
                 -1,
                 EntityType.SHEEP,
                 Material.BOOKSHELF,
-                description,
-                platformLocations));
+                description));
         return team;
+    }
+
+    @Override
+    public List<StatType> getStatTypes() {
+        List<StatType> statTypes = new ArrayList<>();
+        statTypes.add(StatType.PICKUP_ITEM);
+        return statTypes;
     }
 
     @Override
     public List<String> getGamePlayTips() {
         ArrayList<String> tips = new ArrayList<>();
-        tips.add("Run around as fast as you can and mow the grass.");
-        tips.add("Left-Click the grass to break it.");
-        tips.add("The player with the most cut grass wins!!");
+        tips.add("Run around as fast as you can to shear the sheeps.");
+        tips.add("Right click with your sheers to shear a sheep.");
+        tips.add("The first person to get " + maxScore + " wool wins!");
         return tips;
     }
 
     @Override
     public List<String> getGamePlayRules() {
         ArrayList<String> rules = new ArrayList<>();
-        rules.add("Run around as fast as you can and mow the grass.");
-        rules.add("Left-Click the grass to break it.");
-        rules.add("The player with the most cut grass wins!!");
+        rules.add("Run around as fast as you can to shear the sheeps.");
+        rules.add("Right click with your sheers to shear a sheep.");
+        rules.add("The first person to get \" + maxScore + \" wool wins!");
         return rules;
     }
 }

@@ -9,6 +9,22 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.List;
 
+/*********************************************************************************
+ *
+ * OWNER: Robert Andrew Brown & Joseph Rugh
+ * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
+ * PROJECT: forgestorm-minigame-framework
+ * DATE: 6/2/2017
+ * _______________________________________________________________________________
+ *
+ * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
+ *
+ * No part of this project and/or code and/or source code and/or source may be
+ * reproduced, distributed, or transmitted in any form or by any means,
+ * including photocopying, recording, or other electronic or mechanical methods,
+ * without the prior written permission of the owner.
+ */
+
 public class TipAnnouncer {
 
     private final MinigameFramework plugin;
@@ -70,6 +86,8 @@ public class TipAnnouncer {
      */
     private void sendMessage(String message) {
         for (Player players : Bukkit.getOnlinePlayers()) {
+            if (players.hasMetadata("NPC")) return;
+
             //Send Message
             players.sendMessage(message);
 

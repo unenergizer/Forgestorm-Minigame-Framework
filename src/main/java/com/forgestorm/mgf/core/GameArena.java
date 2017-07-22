@@ -2,6 +2,8 @@ package com.forgestorm.mgf.core;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
+import com.forgestorm.mgf.core.games.GameType;
+import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
@@ -78,19 +80,18 @@ public class GameArena extends BukkitRunnable implements Listener {
     }
 
     /**
-     * This will register listeners and setup the game arena.
+     * This will register statlisteners and setup the game arena.
      */
     void setupArena() {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     /**
-     * Here we will unregister listeners and destroy the game
+     * Here we will unregister statlisteners and destroy the game
      * arena.
      */
     void destroyArena() {
-
-        // Unregister listeners
+        // Unregister stat listeners
         BlockBreakEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
         PlayerMoveEvent.getHandlerList().unregister(this);
@@ -127,6 +128,12 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param player The player to remove.
      */
     public void removeArenaPlayer(Player player) {
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+        playerMinigameData.setSelectedTeam(null);
+        playerMinigameData.setQueuedTeam(null);
+        playerMinigameData.setSelectedKit(null);
+
+        // Remove potion effects
         for (PotionEffect potionEffect : player.getActivePotionEffects()) {
             player.removePotionEffect(potionEffect.getType());
         }
@@ -187,8 +194,13 @@ public class GameArena extends BukkitRunnable implements Listener {
         // TODO: remove the spectator player
         // TODO: Remove the spectator menu
 
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(spectator);
+        playerMinigameData.setSelectedTeam(null);
+        playerMinigameData.setQueuedTeam(null);
+        playerMinigameData.setSelectedKit(null);
+
         // Set player as non-spectator in their profile.
-        gameManager.getPlayerManager().getPlayerProfileData(spectator).setSpectator(false);
+        playerMinigameData.setSpectator(false);
 
         // Remove the spectator boss bar.
         spectatorBar.removeBossBar(spectator);
@@ -271,7 +283,9 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     private void showHiddenPlayers() {
         for (Player hiddenPlayer : Bukkit.getOnlinePlayers()) {
+            if (hiddenPlayer.hasMetadata("NPC")) return;
             for (Player players : Bukkit.getOnlinePlayers()) {
+                if (players.hasMetadata("NPC")) return;
                 players.showPlayer(hiddenPlayer);
             }
         }
@@ -284,6 +298,8 @@ public class GameArena extends BukkitRunnable implements Listener {
         PlayerManager playerManager = gameManager.getPlayerManager();
 
         for (Player spectators : Bukkit.getOnlinePlayers()) {
+
+            if (spectators.hasMetadata("NPC")) return;
 
             //If this player is a spectator lets hide them from the other players.
             if (!playerManager.getPlayerProfileData(spectators).isSpectator()) continue;
@@ -349,7 +365,7 @@ public class GameArena extends BukkitRunnable implements Listener {
             countdown = maxCountdown;
 
             // TODO: Let the plugin know to start the core.
-            gameManager.getCurrentMinigame().startGame();
+            gameManager.getCurrentMinigame().setupGame();
         }
         countdown--;
     }
@@ -363,6 +379,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     private void tutorialCountdownMessage(String title, String subtitle, Sound sound) {
         for (Player players : Bukkit.getOnlinePlayers()) {
+            if (players.hasMetadata("NPC")) return;
             plugin.getTitleManagerAPI().sendTitles(players, title, subtitle);
             players.playSound(players.getLocation(), sound, 1f, 1f);
         }
@@ -440,6 +457,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     void addAllArenaPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
             addArenaPlayer(player);
         }
     }
@@ -449,6 +467,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     void removeAllArenaPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
             removeArenaPlayer(player);
         }
     }
@@ -458,6 +477,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     void removeAllArenaSpectators() {
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.hasMetadata("NPC")) return;
             removeSpectator(player);
         }
     }
