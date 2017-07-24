@@ -68,6 +68,10 @@ public class MowGrass extends Minigame {
         }.runTaskTimer(plugin, 0, 20);
     }
 
+    @Override
+    public void setupPlayers() {
+        // TODO: Give player items etc..
+    }
 
     @Override
     public World getLobbyWorld() {

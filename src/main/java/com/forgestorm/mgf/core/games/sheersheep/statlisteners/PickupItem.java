@@ -7,6 +7,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 
 /*********************************************************************************
@@ -40,9 +41,10 @@ public class PickupItem implements StatListener {
         PlayerPickupItemEvent.getHandlerList().unregister(this);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onItemPickUp(PlayerPickupItemEvent event) {
         if (event.getItem().getItemStack().getType() != Material.WOOL) return;
+        event.setCancelled(false);
         Player player = event.getPlayer();
         int amount = event.getItem().getItemStack().getAmount();
         plugin.getGameManager().getScoreManager().addStat(StatType.PICKUP_ITEM, player, amount);

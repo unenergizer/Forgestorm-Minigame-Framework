@@ -9,7 +9,7 @@ import com.forgestorm.mgf.core.world.WorldManager;
 import com.forgestorm.mgf.player.PlayerManager;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -60,10 +60,7 @@ public class GameManager extends BukkitRunnable {
         worldManager.runTaskTimer(plugin, 0, 20);
 
         // Clear any existing entities in the world.
-        for (LivingEntity entity : Bukkit.getWorlds().get(0).getLivingEntities()) {
-            if (entity instanceof Player) return;
-            entity.remove();
-        }
+        clearWorldEntities(Bukkit.getWorlds().get(0).getName());
 
         // On first load, lets init our first game.
         selectGame();
@@ -174,6 +171,7 @@ public class GameManager extends BukkitRunnable {
     public void endGame(boolean startNewGame) {
 
         // Disable the lobby and the arena
+        clearWorldEntities(currentArenaWorldData.getWorldName());
         gameArena.destroyArena();
 
         // Remove players
@@ -219,6 +217,18 @@ public class GameManager extends BukkitRunnable {
             // Set some bool world loaded.
             currentArenaWorldLoaded = true;
             gameArena.generateTeamSpawnLocations(currentArenaWorldData);
+        }
+    }
+
+    /**
+     * Clear any existing entities in the world.
+     *
+     * @param worldName The name of the world to clear entities in.
+     */
+    private void clearWorldEntities(String worldName) {
+        for (Entity entity : Bukkit.getWorld(worldName).getEntities()) {
+            if (entity instanceof Player) return;
+            entity.remove();
         }
     }
 }

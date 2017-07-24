@@ -48,16 +48,25 @@ public class PlayerMinigameData {
     private ItemStack[] inventoryContents;
     private ItemStack[] armorContents;
 
-    public PlayerMinigameData(Player player) {
+    PlayerMinigameData(Player player) {
         this.player = player;
         uuid = player.getUniqueId();
     }
 
+    /**
+     * This will temporarily save the players inventory
+     * and armor contents right before they join a
+     * minigame.
+     */
     public void backupInventoryContents() {
         inventoryContents = player.getInventory().getContents();
         armorContents = player.getInventory().getArmorContents();
     }
 
+    /**
+     * When a minigame is over, we will restore the players
+     * inventory and armor contents.
+     */
     public void restoreInventoryContents() {
         if (inventoryContents != null) player.getInventory().setContents(inventoryContents);
         if (armorContents != null) player.getInventory().setArmorContents(armorContents);

@@ -259,11 +259,13 @@ public class TarkanLobbyScoreboard implements Listener {
 
     @EventHandler
     public void onUpdateScoreboard(UpdateScoreboardEvent event) {
+        if (gameManager.getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) return;
         setBoardData(event.getPlayer());
     }
 
     @EventHandler
     public void onProfileLoad(ProfileLoadedEvent event) {
+        if (gameManager.getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) return;
         addPlayer(event.getPlayer());
     }
 }

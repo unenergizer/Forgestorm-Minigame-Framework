@@ -28,9 +28,9 @@ public enum MinigameMessages {
 	COMMAND_ADMIN_NOT_OP("&cYou do not have permission to do this."),
 	COMMAND_ADMIN_UNKNOWN("&cCommand unknown! Use &a/admin help &cfor more information!"),
 	COMMAND_ADMIN_GAMES_PLAYED("&e&lTotal games played: &c%s"),
-	COMMAND_ADMIN_END_GAME("&c&lThe core has just been shut down. Returning to core lobby."),
-	COMMAND_ADMIN_END_ERROR("&c&lYou can not end a core if the core is not running."),
-	COMMAND_ADMIN_FORCE_START("&c&lYou have just force started a core."),
+	COMMAND_ADMIN_END_GAME("&c&lThe minigame has just been shut down. Returning to minigame lobby."),
+	COMMAND_ADMIN_END_ERROR("&c&lYou can not end a minigame if the minigame is not running."),
+	COMMAND_ADMIN_FORCE_START("&c&lYou have just force started a minigame."),
 	
 	//Team MinigameMessages
 	TEAM_QUEUE_PLACED("&eYou were placed in a queue to join this team."),
@@ -53,7 +53,7 @@ public enum MinigameMessages {
 	GAME_TIME_REMAINING_PLURAL("&e&lGame will start in &c&l%s &e&lseconds."),
 	GAME_TIME_REMAINING_SINGULAR("&e&lGame will start in &c&l1 &e&lsecond."),
 	GAME_ARENA_SPECTATOR_TITLE("&aHello, Spectator!"),
-	GAME_ARENA_SPECTATOR_SUBTITLE("&7Relax, another core will start soon!"),
+	GAME_ARENA_SPECTATOR_SUBTITLE("&7Relax, another minigame will start soon!"),
 	
 	//Join and Quit MinigameMessages
 	PLAYER_JOIN_LOBBY("&a+ &8[&7%s&8/&7%f&8] &7%e"),

@@ -34,10 +34,12 @@ import java.util.Map;
 
 public class PlayerManager implements Listener {
 
+    private final MinigameFramework plugin;
     private final GameManager gameManager;
     private final Map<Player, PlayerMinigameData> playerProfiles = new HashMap<>();
 
     public PlayerManager(MinigameFramework plugin, GameManager gameManager) {
+        this.plugin = plugin;
         this.gameManager = gameManager;
 
         // Register the PlayerManager event stat listeners.
@@ -218,7 +220,15 @@ public class PlayerManager implements Listener {
             event.setJoinMessage(joinMessage);
 
             // Setup spectator player
+            // Run on the next tick to prevent teleport bug.
+
+            System.out.println("Doing spectator specific code! :)");
+
+            PlayerMinigameData playerMinigameData = getPlayerProfileData(player);
+            playerMinigameData.backupInventoryContents();
             gameManager.getGameArena().addSpectator(player);
+            gameManager.getGameArena().teleportSpectator(player);
+
         }
     }
 

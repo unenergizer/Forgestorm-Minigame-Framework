@@ -30,6 +30,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -62,6 +63,7 @@ public class GameArena extends BukkitRunnable implements Listener {
 
     private final MinigameFramework plugin;
     private final GameManager gameManager;
+    private final PlayerManager playerManager;
     private final Minigame minigame;
     private final Configuration configuration;
     private final BossBarAnnouncer spectatorBar = new BossBarAnnouncer(MinigameMessages.BOSS_BAR_SPECTATOR_MESSAGE.toString());
@@ -76,6 +78,7 @@ public class GameArena extends BukkitRunnable implements Listener {
     GameArena(MinigameFramework plugin, GameManager gameManager, Minigame minigame, GameType gameType) {
         this.plugin = plugin;
         this.gameManager = gameManager;
+        this.playerManager = gameManager.getPlayerManager();
         this.minigame = minigame;
         this.configuration = YamlConfiguration.loadConfiguration(
                 new File(plugin.getDataFolder() + "/" + gameType.getFileName())
@@ -98,6 +101,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         BlockBreakEvent.getHandlerList().unregister(this);
         EntityDamageEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
+        PlayerInteractEvent.getHandlerList().unregister(this);
         PlayerMoveEvent.getHandlerList().unregister(this);
         PlayerKickEvent.getHandlerList().unregister(this);
         PlayerQuitEvent.getHandlerList().unregister(this);
@@ -151,15 +155,21 @@ public class GameArena extends BukkitRunnable implements Listener {
     }
 
     /**
+     * This will send the spectator to the main spectator spawn point.
+     * @param spectator The player spectator we want to teleport.
+     */
+    public void teleportSpectator(Player spectator) {
+        CommonSounds.ACTION_FAILED.playSound(spectator);
+        spectator.teleport(spectatorSpawn);
+    }
+
+    /**
      * This will add a spectator to the arena.
      *
      * @param spectator The spectator to add.
      */
     public void addSpectator(Player spectator) {
         // TODO: Give the spectator the spectator menu
-
-        // Teleport player to the spectator spawn position
-        spectator.teleport(spectatorSpawn);
 
         // Set player as spectator in their profile.
         gameManager.getPlayerManager().getPlayerProfileData(spectator).setSpectator(true);
@@ -195,7 +205,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         //Give Spectator tracker menu item.
         ItemStack spectatorServerExit = new ItemBuilder(Material.WATCH).setTitle(ChatColor.GREEN + "" +
                 ChatColor.BOLD + "Back To Lobby").build(true);
-        spectator.getInventory().setItem(8, spectatorServerExit);
+        spectator.getInventory().setItem(1, spectatorServerExit);
     }
 
     /**
@@ -398,9 +408,10 @@ public class GameArena extends BukkitRunnable implements Listener {
             // Reset countdown time.
             countdown = maxCountdown;
 
-            // TODO: Let the plugin know to start the core.
+            // Lets start the minigame!
             minigame.initListeners();
             minigame.setupGame();
+            minigame.setupPlayers();
         }
         countdown--;
     }
@@ -541,9 +552,12 @@ public class GameArena extends BukkitRunnable implements Listener {
         new BukkitRunnable() {
             public void run() {
 
-                removeArenaPlayer(player);
-                addSpectator(player);
-                CommonSounds.ACTION_FAILED.playSound(player);
+                if(!playerManager.getPlayerProfileData(player).isSpectator()) {
+                    removeArenaPlayer(player);
+                    addSpectator(player);
+                }
+
+                teleportSpectator(player);
 
                 cancel();
             }
@@ -560,13 +574,23 @@ public class GameArena extends BukkitRunnable implements Listener {
         }
     }
 
+    /**
+     * Prevent spectators from interacting with the environment.
+     * @param event
+     */
+    @EventHandler
+    public void onSpectatorInteract(PlayerInteractEvent event) {
+        if(!playerManager.getPlayerProfileData(event.getPlayer()).isSpectator()) return;
+        event.setCancelled(true);
+    }
+
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
 
         // Stop the player from moving if the game is showing the rules.
         if (arenaState == ArenaState.ARENA_TUTORIAL) {
             Player player = event.getPlayer();
-            PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+            PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
             boolean isSpectator = playerMinigameData.isSpectator();
 
             double moveX = event.getFrom().getX();

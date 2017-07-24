@@ -5,16 +5,29 @@ import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.player.PlayerManager;
+import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Particle;
+import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.entity.Sheep;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerShearEntityEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /*********************************************************************************
  *
@@ -33,41 +46,49 @@ import java.util.List;
  */
 
 @SuppressWarnings("unused")
-public class SheerSheep extends Minigame {
+public class SheerSheep extends Minigame implements Listener {
+
+    private final SpawnSheep spawnSheep;
+    private final int maxScore = 80;
 
     public SheerSheep(MinigameFramework plugin) {
         super(plugin);
+        spawnSheep = new SpawnSheep(plugin);
     }
 
     @Override
     public void setupGame() {
-        initGame();
+        spawnSheep.spawnSheep();
     }
 
     @Override
     public void disableGame() {
-        // TODO: Do game ending code here.
+        // Cancel threads
+        spawnSheep.cancelSheepSpawn();
+
+        // Unregister listeners
+        PlayerShearEntityEvent.getHandlerList().unregister(this);
     }
 
-    private void initGame() {
-        new BukkitRunnable() {
-            int countdown = 30;
+    @Override
+    public void setupPlayers() {
+        PlayerManager playerManager = plugin.getGameManager().getPlayerManager();
+        ItemStack shears = new ItemStack(Material.SHEARS);
+        ItemStack sword = new ItemStack(Material.GOLD_SWORD);
 
-            @Override
-            public void run() {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (player.hasMetadata("NPC")) return;
-                    player.sendMessage("Game ends in: " + countdown + " seconds.");
-                }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
+            Kit kit = playerMinigameData.getSelectedKit();
 
-                if (countdown == 0) {
-                    cancel();
-                    endMinigame();
-                }
-                countdown--;
+            if (kit == defaultKit) {
+                player.getInventory().addItem(shears.clone());
+            } else if (kit == kit2) {
+                player.getInventory().addItem(sword.clone());
             }
-        }.runTaskTimer(plugin, 0, 20);
+        }
     }
+
+    private Kit defaultKit, kit2;
 
     @Override
     public World getLobbyWorld() {
@@ -80,19 +101,19 @@ public class SheerSheep extends Minigame {
         List<String> defaultKitDesc = new ArrayList<>();
         List<String> kit2Desc = new ArrayList<>();
 
-        defaultKitDesc.add("Blow up them sheeps!");
+        defaultKitDesc.add("Blow up the sheep!");
         defaultKitDesc.add("Get as much wool as you can!");
 
         kit2Desc.add("Knife them till the wool falls off!");
 
 
-        Kit defaultKit = new Kit("Explosive Shears",
+        defaultKit = new Kit("Explosive Shears",
                 ChatColor.GREEN,
                 EntityType.CHICKEN,
                 Material.STONE,
                 defaultKitDesc);
 
-        Kit kit2 = new Kit("Knife Party",
+        kit2 = new Kit("Knife Party",
                 ChatColor.GREEN,
                 EntityType.PIG,
                 Material.STONE,
@@ -135,7 +156,6 @@ public class SheerSheep extends Minigame {
         ArrayList<String> tips = new ArrayList<>();
         tips.add("Run around as fast as you can to shear the sheeps.");
         tips.add("Right click with your sheers to shear a sheep.");
-        int maxScore = 80;
         tips.add("The first person to get " + maxScore + " wool wins!");
         return tips;
     }
@@ -145,7 +165,27 @@ public class SheerSheep extends Minigame {
         ArrayList<String> rules = new ArrayList<>();
         rules.add("Run around as fast as you can to shear the sheeps.");
         rules.add("Right click with your sheers to shear a sheep.");
-        rules.add("The first person to get \" + maxScore + \" wool wins!");
+        rules.add("The first person to get " + maxScore + " wool wins!");
         return rules;
+    }
+
+    @EventHandler
+    public void onEntitySheer(PlayerShearEntityEvent event) {
+        Sheep sheep = (Sheep) event.getEntity();
+        Location sheepEyeLocation = sheep.getEyeLocation();
+        World world = sheep.getWorld();
+        Random rn = new Random();
+        int randCount = RandomChance.randomInt(1, 5);
+
+        world.spawnParticle(Particle.EXPLOSION_LARGE, sheepEyeLocation, 1);
+        world.playSound(sheepEyeLocation, Sound.ENTITY_SHEEP_DEATH, .7f, .7f);
+        world.playSound(sheepEyeLocation, Sound.ENTITY_GENERIC_EXPLODE, .6f, .5f);
+
+        for (int i = 0; i <= randCount; i++) {
+            Item item = sheep.getWorld().dropItem(sheepEyeLocation, new ItemStack(Material.BONE));
+            item.setVelocity(new Vector(rn.nextDouble() - 0.5, rn.nextDouble() / 2.0 + 0.3, rn.nextDouble() - 0.5).multiply(0.4));
+        }
+
+        sheep.setHealth(0);
     }
 }
