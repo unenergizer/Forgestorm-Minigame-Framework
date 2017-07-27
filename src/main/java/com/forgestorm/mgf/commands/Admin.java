@@ -110,5 +110,4 @@ public class Admin implements CommandExecutor {
 		}
 		return true;
 	}
-
 }

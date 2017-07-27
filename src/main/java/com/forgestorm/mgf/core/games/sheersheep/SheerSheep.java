@@ -25,7 +25,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /*********************************************************************************
@@ -110,6 +112,13 @@ public class SheerSheep extends Minigame implements Listener {
         List<StatType> statTypes = new ArrayList<>();
         statTypes.add(StatType.PICKUP_ITEM);
         return statTypes;
+    }
+
+    @Override
+    public Map<StatType, Integer> getWinConditions() {
+        Map<StatType, Integer> winConditions = new HashMap<>();
+        winConditions.put(StatType.PICKUP_ITEM, 80);
+        return winConditions;
     }
 
     @Override

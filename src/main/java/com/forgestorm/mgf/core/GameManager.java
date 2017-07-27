@@ -114,7 +114,7 @@ public class GameManager extends BukkitRunnable {
         gameArena.runTaskTimer(plugin, 0, 20);
 
         // Setup the score manager.
-        scoreManager = new ScoreManager();
+        scoreManager = new ScoreManager(plugin);
 
         // Load arena world
         WorldData worldToLoad = gameArena.getRandomArenaWorld();
@@ -163,7 +163,8 @@ public class GameManager extends BukkitRunnable {
                 players.add(player);
             }
         });
-        scoreManager.initStats(players, currentMinigame.getStatTypes(), plugin);
+        scoreManager.initStats(players, currentMinigame.getStatTypes());
+        scoreManager.initWinConditions(currentMinigame.getWinConditions());
     }
 
     /**

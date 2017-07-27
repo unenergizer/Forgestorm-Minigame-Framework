@@ -23,6 +23,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 
 import java.util.List;
+import java.util.Map;
 
 /*********************************************************************************
  *
@@ -78,6 +79,8 @@ public abstract class Minigame implements Listener {
 
     public abstract List<StatType> getStatTypes();
 
+    public abstract Map<StatType, Integer> getWinConditions();
+
     public void setupPlayers() {
         PlayerManager playerManager = plugin.getGameManager().getPlayerManager();
 
@@ -85,8 +88,11 @@ public abstract class Minigame implements Listener {
             PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
             if (playerMinigameData.isSpectator()) return;
 
+            // Give the player their kit
             playerMinigameData.getSelectedKit().giveKit(player);
 
+            // Set their held item to slot 0.
+            player.getInventory().setHeldItemSlot(0);
         }
     }
 
