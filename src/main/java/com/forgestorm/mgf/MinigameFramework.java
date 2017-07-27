@@ -56,7 +56,7 @@ public class MinigameFramework extends JavaPlugin {
     }
 
     private void registerCommands() {
-        getCommand("admin").setExecutor(new Admin(this));
+        getCommand("mgadmin").setExecutor(new Admin(this));
         getCommand("lobby").setExecutor(new Lobby(this));
     }
 }

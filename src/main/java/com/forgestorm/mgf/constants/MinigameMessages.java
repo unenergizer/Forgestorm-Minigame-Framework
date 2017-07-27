@@ -25,6 +25,7 @@ public enum MinigameMessages {
 	BOSS_BAR_SPECTATOR_MESSAGE("&e&lFORGESTORM &7&l- &a&lMINIGAMES"),
 	
 	//Commands
+	ADMIN("&7[&cAdmin&7] "),
 	COMMAND_ADMIN_NOT_OP("&cYou do not have permission to do this."),
 	COMMAND_ADMIN_UNKNOWN("&cCommand unknown! Use &a/admin help &cfor more information!"),
 	COMMAND_ADMIN_GAMES_PLAYED("&e&lTotal games played: &c%s"),

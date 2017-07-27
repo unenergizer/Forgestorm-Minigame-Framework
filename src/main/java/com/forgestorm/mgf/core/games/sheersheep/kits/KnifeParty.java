@@ -1,8 +1,7 @@
-package com.forgestorm.mgf.core.kit;
+package com.forgestorm.mgf.core.games.sheersheep.kits;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.spigotcore.util.item.ItemBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -12,8 +11,8 @@ import org.bukkit.entity.Player;
  *
  * OWNER: Robert Andrew Brown & Joseph Rugh
  * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
- * PROJECT: forgestorm-mgframework
- * DATE: 6/1/2017
+ * PROJECT: forgestorm-minigame-framework
+ * DATE: 7/27/2017
  * _______________________________________________________________________________
  *
  * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
@@ -24,15 +23,21 @@ import org.bukkit.entity.Player;
  * without the prior written permission of the owner.
  */
 
-@Getter
-@Setter
-@AllArgsConstructor
-public abstract class Kit {
-    protected String kitName;
-    protected ChatColor kitColor;
-    protected EntityType kitEntityType;
-    protected Material kitPlatformMaterials;
-    protected String[] kitDescription;
+public class KnifeParty extends Kit {
 
-    public abstract void giveKit(Player player);
+    public KnifeParty() {
+        super("Knife Party",
+                ChatColor.GREEN,
+                EntityType.PIG,
+                Material.STONE,
+                new String[]{
+                        "Knife them till the wool falls off!"
+                }
+        );
+    }
+
+    @Override
+    public void giveKit(Player player) {
+        player.getInventory().addItem(new ItemBuilder(Material.GOLD_SWORD).setTitle("Golden Knife").build(true));
+    }
 }

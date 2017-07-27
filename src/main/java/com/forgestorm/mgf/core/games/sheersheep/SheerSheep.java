@@ -2,11 +2,11 @@ package com.forgestorm.mgf.core.games.sheersheep;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.games.sheersheep.kits.ExplosiveShears;
+import com.forgestorm.mgf.core.games.sheersheep.kits.KnifeParty;
 import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
-import com.forgestorm.mgf.player.PlayerManager;
-import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -17,7 +17,6 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -70,24 +69,6 @@ public class SheerSheep extends Minigame implements Listener {
         PlayerShearEntityEvent.getHandlerList().unregister(this);
     }
 
-    @Override
-    public void setupPlayers() {
-        PlayerManager playerManager = plugin.getGameManager().getPlayerManager();
-        ItemStack shears = new ItemStack(Material.SHEARS);
-        ItemStack sword = new ItemStack(Material.GOLD_SWORD);
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
-            Kit kit = playerMinigameData.getSelectedKit();
-
-            if (kit == defaultKit) {
-                player.getInventory().addItem(shears.clone());
-            } else if (kit == kit2) {
-                player.getInventory().addItem(sword.clone());
-            }
-        }
-    }
-
     private Kit defaultKit, kit2;
 
     @Override
@@ -98,29 +79,9 @@ public class SheerSheep extends Minigame implements Listener {
     @Override
     public List<Kit> getKits() {
         List<Kit> kits = new ArrayList<>();
-        List<String> defaultKitDesc = new ArrayList<>();
-        List<String> kit2Desc = new ArrayList<>();
 
-        defaultKitDesc.add("Blow up the sheep!");
-        defaultKitDesc.add("Get as much wool as you can!");
-
-        kit2Desc.add("Knife them till the wool falls off!");
-
-
-        defaultKit = new Kit("Explosive Shears",
-                ChatColor.GREEN,
-                EntityType.CHICKEN,
-                Material.STONE,
-                defaultKitDesc);
-
-        kit2 = new Kit("Knife Party",
-                ChatColor.GREEN,
-                EntityType.PIG,
-                Material.STONE,
-                kit2Desc);
-
-        kits.add(defaultKit);
-        kits.add(kit2);
+        kits.add(new ExplosiveShears());
+        kits.add(new KnifeParty());
 
         return kits;
     }

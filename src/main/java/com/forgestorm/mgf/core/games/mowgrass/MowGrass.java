@@ -2,6 +2,7 @@ package com.forgestorm.mgf.core.games.mowgrass;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.games.mowgrass.kits.GrassPuncher;
 import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
@@ -69,11 +70,6 @@ public class MowGrass extends Minigame {
     }
 
     @Override
-    public void setupPlayers() {
-        // TODO: Give player items etc..
-    }
-
-    @Override
     public World getLobbyWorld() {
         return Bukkit.getWorld("mg-lobby");
     }
@@ -81,28 +77,8 @@ public class MowGrass extends Minigame {
     @Override
     public List<Kit> getKits() {
         List<Kit> kits = new ArrayList<>();
-        List<String> defaultKitDesc = new ArrayList<>();
-        List<String> kit2Desc = new ArrayList<>();
 
-        defaultKitDesc.add("All you really need is a lawn mower.");
-        defaultKitDesc.add("But you don't get one. Use your hands!");
-
-        kit2Desc.add("You got the mower, your fists!");
-
-        Kit defaultKit = new Kit("Grass Puncher",
-                ChatColor.GREEN,
-                EntityType.CHICKEN,
-                Material.STONE,
-                defaultKitDesc);
-
-        Kit kit2 = new Kit("Mower",
-                ChatColor.GREEN,
-                EntityType.PIG,
-                Material.STONE,
-                kit2Desc);
-
-        kits.add(defaultKit);
-        kits.add(kit2);
+        kits.add(new GrassPuncher());
 
         return kits;
     }

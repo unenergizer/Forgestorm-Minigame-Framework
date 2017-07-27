@@ -5,8 +5,11 @@ import com.forgestorm.mgf.core.GameArena;
 import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.player.PlayerManager;
+import com.forgestorm.mgf.player.PlayerMinigameData;
 import lombok.Getter;
 import lombok.Setter;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -63,8 +66,6 @@ public abstract class Minigame implements Listener {
 
     public abstract void disableGame();
 
-    public abstract void setupPlayers();
-
     public abstract World getLobbyWorld();
 
     public abstract List<String> getGamePlayTips();
@@ -76,6 +77,18 @@ public abstract class Minigame implements Listener {
     public abstract List<Team> getTeams();
 
     public abstract List<StatType> getStatTypes();
+
+    public void setupPlayers() {
+        PlayerManager playerManager = plugin.getGameManager().getPlayerManager();
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
+            if (playerMinigameData.isSpectator()) return;
+
+            playerMinigameData.getSelectedKit().giveKit(player);
+
+        }
+    }
 
     public void endMinigame() {
         disableGame();

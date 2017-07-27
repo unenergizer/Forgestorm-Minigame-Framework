@@ -1,14 +1,19 @@
 package com.forgestorm.mgf.core;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.games.GameType;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.score.ScoreManager;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.core.world.WorldManager;
 import com.forgestorm.mgf.player.PlayerManager;
+import com.forgestorm.spigotcore.events.UpdateScoreboardEvent;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -43,6 +48,7 @@ public class GameManager extends BukkitRunnable {
     private GameType currentMinigameType;
     private Minigame currentMinigame;
     private int maxPlayersOnline = 16;
+    @Setter
     private int minPlayersToStartGame = 2;
     private int currentGameIndex = 0;
     private WorldData currentArenaWorldData;
@@ -230,5 +236,31 @@ public class GameManager extends BukkitRunnable {
             if (entity instanceof Player) return;
             entity.remove();
         }
+    }
+
+    /**
+     * Sets the maximum number of players allowed on the server.
+     *
+     * @param commandSender The command sender who requested this number to be changed.
+     * @param num           The new number of max players allowed online.
+     * @return True if the request was a success, false otherwise.
+     */
+    public boolean setMaxPlayersOnline(CommandSender commandSender, int num) {
+        // Make sure the max players online is greater than the minimum needed to start a game.
+        if (num < minPlayersToStartGame) {
+            commandSender.sendMessage(MinigameMessages.ADMIN.toString() + ChatColor.RED + "" + ChatColor.BOLD +
+                    "The number must be greater than the minimum players needed to start a game!");
+            return false;
+        }
+
+        // If in the lobby, update the scoreboard to reflect the new max players change.
+        if (inLobby) {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                Bukkit.getPluginManager().callEvent(new UpdateScoreboardEvent(player));
+            }
+        }
+
+        maxPlayersOnline = num;
+        return true;
     }
 }

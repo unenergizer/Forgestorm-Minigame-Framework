@@ -1,8 +1,6 @@
-package com.forgestorm.mgf.core.kit;
+package com.forgestorm.mgf.core.games.mowgrass.kits;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.forgestorm.mgf.core.kit.Kit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -12,8 +10,8 @@ import org.bukkit.entity.Player;
  *
  * OWNER: Robert Andrew Brown & Joseph Rugh
  * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
- * PROJECT: forgestorm-mgframework
- * DATE: 6/1/2017
+ * PROJECT: forgestorm-minigame-framework
+ * DATE: 7/27/2017
  * _______________________________________________________________________________
  *
  * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
@@ -24,15 +22,22 @@ import org.bukkit.entity.Player;
  * without the prior written permission of the owner.
  */
 
-@Getter
-@Setter
-@AllArgsConstructor
-public abstract class Kit {
-    protected String kitName;
-    protected ChatColor kitColor;
-    protected EntityType kitEntityType;
-    protected Material kitPlatformMaterials;
-    protected String[] kitDescription;
+public class GrassPuncher extends Kit {
 
-    public abstract void giveKit(Player player);
+    public GrassPuncher() {
+        super("Grass Puncher",
+                ChatColor.GREEN,
+                EntityType.CHICKEN,
+                Material.STONE,
+                new String[]{
+                        "All you really need is a lawn mower.",
+                        "But you don't get one. Use your hands!"
+                }
+        );
+    }
+
+    @Override
+    public void giveKit(Player player) {
+        //TODO
+    }
 }

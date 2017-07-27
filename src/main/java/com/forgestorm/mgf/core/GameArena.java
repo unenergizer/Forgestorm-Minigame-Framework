@@ -205,7 +205,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         //Give Spectator tracker menu item.
         ItemStack spectatorServerExit = new ItemBuilder(Material.WATCH).setTitle(ChatColor.GREEN + "" +
                 ChatColor.BOLD + "Back To Lobby").build(true);
-        spectator.getInventory().setItem(1, spectatorServerExit);
+        spectator.getInventory().setItem(0, spectatorServerExit);
     }
 
     /**

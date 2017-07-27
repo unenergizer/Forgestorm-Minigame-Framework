@@ -21,6 +21,7 @@ author: Robert Andrew Brown
 website: http://www.forgestorm.com/
 depend: [TitleManager, FS-SpigotCore]
 commands:
-   admin:
+   mgadmin:
+      aliases: [mga]
    lobby:
       aliases: [hub]

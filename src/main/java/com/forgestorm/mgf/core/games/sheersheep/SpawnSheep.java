@@ -38,6 +38,7 @@ class SpawnSheep {
     }
 
     void spawnSheep() {
+        Random random = new Random();
         spawnSheep = true;
         world = Bukkit.getWorld(plugin.getGameManager().getCurrentArenaWorldData().getWorldName());
 
@@ -49,8 +50,7 @@ class SpawnSheep {
 
                 if (currentSheepCount <= maxSheepCount) {
                     for (int i = 1; i <= maxSheepCount - currentSheepCount; i++) {
-                        Random generator = new Random();
-                        Location location = new Location(world, generator.nextInt(80) - 40, 82, generator.nextInt(80) - 40);
+                        Location location = new Location(world, random.nextInt(80) - 40, 82, random.nextInt(80) - 40);
                         location.getWorld().spawnEntity(location, EntityType.SHEEP);
                     }
                 }
