@@ -463,8 +463,8 @@ public class GameArena extends BukkitRunnable implements Listener {
 
             // Second Place
             if (sortedPlayers.size() >= 2) {
-            Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.AQUA + "" + ChatColor.BOLD +
-                    "2nd " + ChatColor.AQUA + sortedPlayers.get(1).getDisplayName()));
+                Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.AQUA + "" + ChatColor.BOLD +
+                        "2nd " + ChatColor.AQUA + sortedPlayers.get(1).getDisplayName()));
             }
 
             // Third Place
@@ -474,13 +474,12 @@ public class GameArena extends BukkitRunnable implements Listener {
             }
 
             //Show players how they scored.
-            for (int i = 0; i < sortedPlayers.size(); i++) {
-                for (Player players : Bukkit.getOnlinePlayers()) {
-                    if (sortedPlayers.get(i).equals(players.getName()) && i > 2) {
-                        int place = i + 1;
-                        Bukkit.broadcastMessage("");
-                        players.sendMessage(CenterChatText.centerChatMessage(ChatColor.RED + "You placed " + place + "th place."));
-                    }
+            if (sortedPlayers.size() >= 4) {
+                for (int i = 3; i < sortedPlayers.size(); i++) {
+                    int place = i + 1;
+                    Bukkit.broadcastMessage("");
+                    sortedPlayers.get(i).sendMessage(CenterChatText.centerChatMessage(ChatColor.RED +
+                            "You placed " + place + "th place."));
                 }
             }
 
