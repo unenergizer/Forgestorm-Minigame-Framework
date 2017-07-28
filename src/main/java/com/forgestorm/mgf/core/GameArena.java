@@ -42,6 +42,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /*********************************************************************************
  *
@@ -156,6 +157,7 @@ public class GameArena extends BukkitRunnable implements Listener {
 
     /**
      * This will send the spectator to the main spectator spawn point.
+     *
      * @param spectator The player spectator we want to teleport.
      */
     public void teleportSpectator(Player spectator) {
@@ -438,27 +440,49 @@ public class GameArena extends BukkitRunnable implements Listener {
         arenaState = ArenaState.ARENA_SHOW_SCORES;
 
         if (countdown == 12) {
+            Map<Player, Double> finalScores = plugin.getGameManager().getScoreManager().getFinalScore();
+            List<Player> sortedPlayers = new ArrayList<>();
+
+            // TODO: Fix redundant sorting...
+            for (Player player : finalScores.keySet()) {
+                sortedPlayers.add(player);
+            }
+
+            System.out.println(sortedPlayers);
+
             //Show the game rules only once
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage(MinigameMessages.GAME_BAR_SCORES.toString());
             Bukkit.broadcastMessage("");
-            Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.GREEN + "" + ChatColor.BOLD + "1st " + ChatColor.GREEN + "snip"));
-            Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.AQUA + "" + ChatColor.BOLD + "2nd " + ChatColor.AQUA + "snip"));
-            Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD + "3rd " + ChatColor.LIGHT_PURPLE + "snip"));
 
+            // First Place
+            Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.GREEN + "" + ChatColor.BOLD +
+                    "1st " + ChatColor.GREEN + sortedPlayers.get(0).getDisplayName()));
+
+            // Second Place
+            if (sortedPlayers.size() >= 2) {
+            Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.AQUA + "" + ChatColor.BOLD +
+                    "2nd " + ChatColor.AQUA + sortedPlayers.get(1).getDisplayName()));
+            }
+
+            // Third Place
+            if (sortedPlayers.size() >= 3) {
+                Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD +
+                        "3rd " + ChatColor.LIGHT_PURPLE + sortedPlayers.get(2).getDisplayName()));
+            }
 
             //Show players how they scored.
-//        for (int i = 0; i < playerPlaces.size(); i++) {
-//            for (Player players: Bukkit.getOnlinePlayers()) {
-//                if (playerPlaces.get(i).equals(players.getName()) && i > 2) {
-//                    int place = i + 1;
-//                    Bukkit.broadcastMessage("");
-//                    players.sendMessage(CenterChatText.centerChatMessage(ChatColor.RED + "You placed " + place + "th place."));
-//                }
-//            }
-//        }
+            for (int i = 0; i < sortedPlayers.size(); i++) {
+                for (Player players : Bukkit.getOnlinePlayers()) {
+                    if (sortedPlayers.get(i).equals(players.getName()) && i > 2) {
+                        int place = i + 1;
+                        Bukkit.broadcastMessage("");
+                        players.sendMessage(CenterChatText.centerChatMessage(ChatColor.RED + "You placed " + place + "th place."));
+                    }
+                }
+            }
 
             Bukkit.broadcastMessage("");
             Bukkit.broadcastMessage(MinigameMessages.GAME_BAR_BOTTOM.toString());
@@ -552,7 +576,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         new BukkitRunnable() {
             public void run() {
 
-                if(!playerManager.getPlayerProfileData(player).isSpectator()) {
+                if (!playerManager.getPlayerProfileData(player).isSpectator()) {
                     removeArenaPlayer(player);
                     addSpectator(player);
                 }
@@ -576,11 +600,12 @@ public class GameArena extends BukkitRunnable implements Listener {
 
     /**
      * Prevent spectators from interacting with the environment.
+     *
      * @param event
      */
     @EventHandler
     public void onSpectatorInteract(PlayerInteractEvent event) {
-        if(!playerManager.getPlayerProfileData(event.getPlayer()).isSpectator()) return;
+        if (!playerManager.getPlayerProfileData(event.getPlayer()).isSpectator()) return;
         event.setCancelled(true);
     }
 
@@ -616,10 +641,14 @@ public class GameArena extends BukkitRunnable implements Listener {
     }
 
     @EventHandler
-    public void onPlayerKick(PlayerKickEvent event) { if (shouldMinigameEnd()) minigame.endMinigame(); }
+    public void onPlayerKick(PlayerKickEvent event) {
+        if (shouldMinigameEnd()) minigame.endMinigame();
+    }
 
     @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) { if (shouldMinigameEnd()) minigame.endMinigame(); }
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        if (shouldMinigameEnd()) minigame.endMinigame();
+    }
 
     /**
      * This is a check to see if the game should end.

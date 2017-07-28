@@ -43,6 +43,7 @@ public class GameManager extends BukkitRunnable {
     private final PlayerManager playerManager;
     private final WorldManager worldManager;
     private final List<String> gamesToPlay;
+    private ScoreManager scoreManager;
     private GameLobby gameLobby;
     private GameArena gameArena;
     private GameType currentMinigameType;
@@ -54,7 +55,6 @@ public class GameManager extends BukkitRunnable {
     private WorldData currentArenaWorldData;
     private boolean currentArenaWorldLoaded = false;
     private boolean inLobby = true;
-    private ScoreManager scoreManager;
 
     public GameManager(MinigameFramework plugin) {
         this.plugin = plugin;

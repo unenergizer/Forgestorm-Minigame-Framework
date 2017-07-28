@@ -2,14 +2,16 @@ package com.forgestorm.mgf.core.score;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.TreeMap;
 
 /*********************************************************************************
  *
@@ -35,6 +37,8 @@ public class ScoreManager {
     private final List<StatListener> statListeners = new ArrayList<>();
     private final Map<StatType, Double> winConditions = new HashMap<>();
     private boolean winConditionMet = false;
+    @Getter
+    private Map<Player, Double> finalScore;
 
     public ScoreManager(MinigameFramework plugin) {
         this.plugin = plugin;
@@ -43,7 +47,7 @@ public class ScoreManager {
     /**
      * Register all stats that the game will listen to during the game play.
      *
-     * @param players    A list of players.
+     * @param players   A list of players.
      * @param scoreData A list of data that contains StatTypes to listen to.
      */
     public void initStats(List<Player> players, List<ScoreData> scoreData) {
@@ -103,17 +107,24 @@ public class ScoreManager {
         }
     }
 
+    /**
+     * Generate a list of the top performing players for end game scores.
+     *
+     * @param statType The stat type used to reach a end game win condition.
+     */
     private void generateTopScores(StatType statType) {
         // Build easy map for score sorting.
-        Map<Player, Double> scores = new HashMap<>();
+        Map<Player, Double> unsortedScores = new HashMap<>();
 
         for (Player player : playerStats.keySet()) {
-            scores.put(player, playerStats.get(player).get(statType));
+            unsortedScores.put(player, playerStats.get(player).get(statType));
         }
 
-        // TODO: Sort the scores
-        Stream<Map.Entry<Player, Double>> sorted = scores.entrySet().stream().sorted(Map.Entry.comparingByValue());
-
+        // Sort the players scores.
+        MyComparator comparator = new MyComparator(unsortedScores);
+        finalScore = new TreeMap<>(comparator);
+        finalScore.putAll(unsortedScores);
+        System.out.println(finalScore);
     }
 
     /**
@@ -157,5 +168,32 @@ public class ScoreManager {
         playerStats.forEach((player, stats) -> {
             stats.forEach((statType, amount) -> Bukkit.broadcastMessage(player.getName() + " : " + statType + "=" + amount));
         });
+    }
+
+    /**
+     * Code by: Sujan Reddy A
+     * Date: Feb 10 '13 at 6:10
+     * Source: https://stackoverflow.com/a/14795215/2865125
+     *
+     * Modified by: Robert Brown
+     * Date Added: 7/28/2017
+     */
+    class MyComparator implements Comparator<Object> {
+
+        Map<Player, Double> map;
+
+        MyComparator(Map<Player, Double> map) {
+            this.map = map;
+        }
+
+        @SuppressWarnings({"SuspiciousMethodCalls", "NumberEquality"})
+        public int compare(Object o1, Object o2) {
+
+            if (map.get(o2) == map.get(o1)) {
+                return 1;
+            } else {
+                return (map.get(o2)).compareTo(map.get(o1));
+            }
+        }
     }
 }
