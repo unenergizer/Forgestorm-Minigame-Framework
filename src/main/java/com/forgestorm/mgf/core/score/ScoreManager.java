@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /*********************************************************************************
  *
@@ -30,47 +31,51 @@ public class ScoreManager {
 
     private final MinigameFramework plugin;
 
-    private final Map<Player, Map<StatType, Integer>> playerStats = new HashMap<>();
+    private final Map<Player, Map<StatType, Double>> playerStats = new HashMap<>();
     private final List<StatListener> statListeners = new ArrayList<>();
-    private Map<StatType, Integer> winConditions;
+    private final Map<StatType, Double> winConditions = new HashMap<>();
+    private boolean winConditionMet = false;
 
     public ScoreManager(MinigameFramework plugin) {
         this.plugin = plugin;
     }
 
-    // Choose "main" stat listener for a players/teams placing and scoreboard info.
-
-
     /**
      * Register all stats that the game will listen to during the game play.
      *
-     * @param players   A list of players.
-     * @param statTypes A list of stat types to listen to.
+     * @param players    A list of players.
+     * @param scoreData A list of data that contains StatTypes to listen to.
      */
-    public void initStats(List<Player> players, List<StatType> statTypes) {
+    public void initStats(List<Player> players, List<ScoreData> scoreData) {
         // For each player register a statType and default value
-        players.forEach(player -> {
-            System.out.println("ADDING THE PLAYER TO THE MAP: " + player.getName());
-            Map<StatType, Integer> statsForPlayer = new HashMap<>();
-            statTypes.forEach(type -> statsForPlayer.put(type, 0));
+        for (Player player : players) {
+            Map<StatType, Double> statsForPlayer = new HashMap<>();
+            for (ScoreData data : scoreData) {
+                statsForPlayer.put(data.getStatType(), 0.0);
+            }
             playerStats.put(player, statsForPlayer);
-        });
+        }
 
         // Save stat stat listeners
-        statTypes.forEach(statType -> statListeners.add(statType.registerListener(plugin)));
+        for (ScoreData data : scoreData) {
+            statListeners.add(data.getStatType().registerListener(plugin));
+        }
     }
 
     /**
      * This will add a win condition to the score manager.  Win
      * conditions determine when a game should end.
-     *
+     * <p>
      * StatType = The stat we want to listen to for a win.
      * Integer = The max points needed for the win.
      *
-     * @param winConditions The win conditions for the given game.
+     * @param scoreData A data class that contains win conditions for the given game.
      */
-    public void initWinConditions(Map<StatType, Integer> winConditions) {
-        this.winConditions = winConditions;
+    public void initWinConditions(List<ScoreData> scoreData) {
+        for (ScoreData data : scoreData) {
+            if (!data.isWinCondition()) return;
+            winConditions.put(data.getStatType(), data.getMaxWinScore());
+        }
     }
 
     /**
@@ -81,14 +86,34 @@ public class ScoreManager {
      */
     private void checkWinConditions(StatType statType, Player player) {
         if (!winConditions.containsKey(statType)) return;
+        if (winConditionMet) return;
 
-        int playerPoints = playerStats.get(player).get(statType);
-        int maxPoints = winConditions.get(statType);
+        double playerPoints = playerStats.get(player).get(statType);
+        double maxPoints = winConditions.get(statType);
 
-        if (playerPoints >= maxPoints) {
+        if (playerPoints >= maxPoints && !winConditionMet) {
+            winConditionMet = true;
+
+            // Generate the top scores for display.
+            generateTopScores(statType);
+
             // Point threshold has been met. Lets end the current game.
+            // TODO: Switch to show scores instead?
             plugin.getGameManager().getCurrentMinigame().endMinigame();
         }
+    }
+
+    private void generateTopScores(StatType statType) {
+        // Build easy map for score sorting.
+        Map<Player, Double> scores = new HashMap<>();
+
+        for (Player player : playerStats.keySet()) {
+            scores.put(player, playerStats.get(player).get(statType));
+        }
+
+        // TODO: Sort the scores
+        Stream<Map.Entry<Player, Double>> sorted = scores.entrySet().stream().sorted(Map.Entry.comparingByValue());
+
     }
 
     /**
@@ -108,9 +133,9 @@ public class ScoreManager {
      * @param player   The player who we are adding points for.
      * @param amount   The amount of points to add.
      */
-    public void addStat(StatType statType, Player player, int amount) {
+    public void addStat(StatType statType, Player player, double amount) {
 
-        Map<StatType, Integer> stats = playerStats.get(player);
+        Map<StatType, Double> stats = playerStats.get(player);
         stats.replace(statType, stats.get(statType) + amount);
         playerStats.replace(player, stats);
 

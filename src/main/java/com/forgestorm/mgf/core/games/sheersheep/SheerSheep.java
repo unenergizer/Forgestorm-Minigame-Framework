@@ -5,6 +5,7 @@ import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.sheersheep.kits.ExplosiveShears;
 import com.forgestorm.mgf.core.games.sheersheep.kits.KnifeParty;
 import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.score.ScoreData;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
 import com.forgestorm.spigotcore.util.math.RandomChance;
@@ -25,9 +26,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /*********************************************************************************
@@ -108,17 +107,10 @@ public class SheerSheep extends Minigame implements Listener {
     }
 
     @Override
-    public List<StatType> getStatTypes() {
-        List<StatType> statTypes = new ArrayList<>();
-        statTypes.add(StatType.PICKUP_ITEM);
+    public List<ScoreData> getScoreData() {
+        List<ScoreData> statTypes = new ArrayList<>();
+        statTypes.add(new ScoreData(StatType.PICKUP_ITEM, true, 80.0));
         return statTypes;
-    }
-
-    @Override
-    public Map<StatType, Integer> getWinConditions() {
-        Map<StatType, Integer> winConditions = new HashMap<>();
-        winConditions.put(StatType.PICKUP_ITEM, 80);
-        return winConditions;
     }
 
     @Override

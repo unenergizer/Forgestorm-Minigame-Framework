@@ -159,12 +159,11 @@ public class GameManager extends BukkitRunnable {
         Bukkit.getOnlinePlayers().forEach(player -> {
             if (player.hasMetadata("NPC")) return;
             if (!playerManager.getPlayerProfileData(player).isSpectator()) {
-                System.out.println("DEBUG!!!: PLAYER BEING ADDED TO LIST: " + player.getName());
                 players.add(player);
             }
         });
-        scoreManager.initStats(players, currentMinigame.getStatTypes());
-        scoreManager.initWinConditions(currentMinigame.getWinConditions());
+        scoreManager.initStats(players, currentMinigame.getScoreData());
+        scoreManager.initWinConditions(currentMinigame.getScoreData());
     }
 
     /**

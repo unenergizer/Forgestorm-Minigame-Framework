@@ -3,7 +3,7 @@ package com.forgestorm.mgf.core.games;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameArena;
 import com.forgestorm.mgf.core.kit.Kit;
-import com.forgestorm.mgf.core.score.StatType;
+import com.forgestorm.mgf.core.score.ScoreData;
 import com.forgestorm.mgf.core.team.Team;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
@@ -23,7 +23,6 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 
 import java.util.List;
-import java.util.Map;
 
 /*********************************************************************************
  *
@@ -77,9 +76,7 @@ public abstract class Minigame implements Listener {
 
     public abstract List<Team> getTeams();
 
-    public abstract List<StatType> getStatTypes();
-
-    public abstract Map<StatType, Integer> getWinConditions();
+    public abstract List<ScoreData> getScoreData();
 
     public void setupPlayers() {
         PlayerManager playerManager = plugin.getGameManager().getPlayerManager();

@@ -4,6 +4,7 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.mowgrass.kits.GrassPuncher;
 import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.score.ScoreData;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
 import org.bukkit.Bukkit;
@@ -15,9 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /*********************************************************************************
  *
@@ -104,17 +103,10 @@ public class MowGrass extends Minigame {
     }
 
     @Override
-    public List<StatType> getStatTypes() {
-        List<StatType> statTypes = new ArrayList<>();
-        statTypes.add(StatType.FIRST_KILL);
-        return statTypes;
-    }
-
-    @Override
-    public Map<StatType, Integer> getWinConditions() {
-        Map<StatType, Integer> winConditions = new HashMap<>();
-        winConditions.put(StatType.FIRST_KILL, 1);
-        return winConditions;
+    public List<ScoreData> getScoreData() {
+        List<ScoreData> scoreData = new ArrayList<>();
+        scoreData.add(new ScoreData(StatType.FIRST_KILL, true, 1.0));
+        return scoreData;
     }
 
     @Override
