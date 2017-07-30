@@ -84,10 +84,12 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param player The player that will have their scoreboard removed.
      */
     public void removePlayer(Player player) {
-        if (!titleManagerAPI.hasScoreboard(player)) return;
-        titleManagerAPI.removeScoreboard(player);
-    }
+        //titleManagerAPI.removeScoreboard(player);
 
+        for (int i = 1; i <= 15; i++) {
+            titleManagerAPI.removeScoreboardValue(player, i);
+        }
+    }
 
     /**
      * This updates the player counts on peoples scoreboard when

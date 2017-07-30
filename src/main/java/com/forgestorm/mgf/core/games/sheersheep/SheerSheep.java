@@ -7,6 +7,7 @@ import com.forgestorm.mgf.core.games.sheersheep.kits.KnifeParty;
 import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.ScoreData;
 import com.forgestorm.mgf.core.score.StatType;
+import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
 import com.forgestorm.mgf.core.team.Team;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
@@ -50,6 +51,8 @@ public class SheerSheep extends Minigame implements Listener {
 
     private final SpawnSheep spawnSheep;
     private final int maxScore = 80;
+    private final StatType mainStatType = StatType.PICKUP_ITEM;
+    private ArenaPointsCounter arenaPointsCounter;
 
     public SheerSheep(MinigameFramework plugin) {
         super(plugin);
@@ -58,6 +61,10 @@ public class SheerSheep extends Minigame implements Listener {
 
     @Override
     public void setupGame() {
+        arenaPointsCounter = new ArenaPointsCounter(plugin, mainStatType);
+        arenaPointsCounter.addAllPlayers();
+        arenaPointsCounter.runTaskTimerAsynchronously(plugin, 0, 10);
+
         spawnSheep.spawnSheep();
     }
 
@@ -65,6 +72,8 @@ public class SheerSheep extends Minigame implements Listener {
     public void disableGame() {
         // Cancel threads
         spawnSheep.cancelSheepSpawn();
+        arenaPointsCounter.setCancelTask(true);
+        arenaPointsCounter.removeAllPlayers();
 
         // Unregister listeners
         PlayerShearEntityEvent.getHandlerList().unregister(this);
@@ -109,7 +118,7 @@ public class SheerSheep extends Minigame implements Listener {
     @Override
     public List<ScoreData> getScoreData() {
         List<ScoreData> statTypes = new ArrayList<>();
-        statTypes.add(new ScoreData(StatType.PICKUP_ITEM, true, 80.0));
+        statTypes.add(new ScoreData(mainStatType, true, 80.0));
         return statTypes;
     }
 

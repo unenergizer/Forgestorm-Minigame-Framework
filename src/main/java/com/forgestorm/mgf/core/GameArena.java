@@ -33,6 +33,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
@@ -102,6 +103,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         BlockBreakEvent.getHandlerList().unregister(this);
         EntityDamageEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
+        PlayerPickupItemEvent.getHandlerList().unregister(this);
         PlayerInteractEvent.getHandlerList().unregister(this);
         PlayerMoveEvent.getHandlerList().unregister(this);
         PlayerKickEvent.getHandlerList().unregister(this);
@@ -595,6 +597,11 @@ public class GameArena extends BukkitRunnable implements Listener {
             boolean tutorial = arenaState == ArenaState.ARENA_TUTORIAL;
             if (spectator || tutorial) event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+        event.setCancelled(true);
     }
 
     /**

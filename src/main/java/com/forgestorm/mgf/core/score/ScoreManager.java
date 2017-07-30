@@ -3,7 +3,6 @@ package com.forgestorm.mgf.core.score;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
 import lombok.Getter;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -99,10 +98,9 @@ public class ScoreManager {
             winConditionMet = true;
 
             // Generate the top scores for display.
-            generateTopScores(statType);
+            finalScore = generateTopScores(statType);
 
             // Point threshold has been met. Lets end the current game.
-            // TODO: Switch to show scores instead?
             plugin.getGameManager().getCurrentMinigame().endMinigame();
         }
     }
@@ -112,7 +110,7 @@ public class ScoreManager {
      *
      * @param statType The stat type used to reach a end game win condition.
      */
-    private void generateTopScores(StatType statType) {
+    public Map<Player, Double> generateTopScores(StatType statType) {
         // Build easy map for score sorting.
         Map<Player, Double> unsortedScores = new HashMap<>();
 
@@ -122,9 +120,10 @@ public class ScoreManager {
 
         // Sort the players scores.
         MyComparator comparator = new MyComparator(unsortedScores);
-        finalScore = new TreeMap<>(comparator);
-        finalScore.putAll(unsortedScores);
-        System.out.println(finalScore);
+        Map<Player, Double> scores = new TreeMap<>(comparator);
+        scores.putAll(unsortedScores);
+
+        return scores;
     }
 
     /**
@@ -166,7 +165,7 @@ public class ScoreManager {
      */
     public void updateDatabase() {
         playerStats.forEach((player, stats) -> {
-            stats.forEach((statType, amount) -> Bukkit.broadcastMessage(player.getName() + " : " + statType + "=" + amount));
+            stats.forEach((statType, amount) -> System.out.println(player.getName() + " : " + statType + "=" + amount));
         });
     }
 
