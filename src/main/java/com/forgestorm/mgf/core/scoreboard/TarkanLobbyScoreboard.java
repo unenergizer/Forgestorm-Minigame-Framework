@@ -7,12 +7,14 @@ import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.team.Team;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.mgf.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.SpigotCore;
 import com.forgestorm.spigotcore.constants.SpigotCoreMessages;
 import com.forgestorm.spigotcore.database.PlayerProfileData;
 import com.forgestorm.spigotcore.database.ProfileLoadedEvent;
 import com.forgestorm.spigotcore.events.UpdateScoreboardEvent;
 import io.puharesource.mc.titlemanager.api.v2.TitleManagerAPI;
+import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -41,7 +43,9 @@ public class TarkanLobbyScoreboard implements Listener {
     private final SpigotCore spigotCore;
     private final GameManager gameManager;
     private final GameLobby gameLobby;
+    @Getter
     private final TitleManagerAPI titleManagerAPI;
+    private final boolean showDebug = true;
     //private final Animation animation;
     private int gameWaitingAnimate = 1;
 
@@ -62,7 +66,10 @@ public class TarkanLobbyScoreboard implements Listener {
      *
      * @param player The player that will receive a scoreboard.
      */
-    private void addPlayer(Player player) {
+    public void addPlayer(Player player) {
+        if (titleManagerAPI.hasScoreboard(player)) return; // Prevent duplicate scoreboard adds.
+        ColorLogger.DEBUG.printLog(showDebug, "TarkanLobbyScoreboard - addPlayer(" + player.getDisplayName() + ")");
+
         // Tarkan board setup
         titleManagerAPI.giveScoreboard(player);
 
@@ -84,11 +91,10 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param player The player that will have their scoreboard removed.
      */
     public void removePlayer(Player player) {
-        //titleManagerAPI.removeScoreboard(player);
+        if (!titleManagerAPI.hasScoreboard(player)) return;
+        ColorLogger.DEBUG.printLog(showDebug, "TarkanLobbyScoreboard - removePlayer(" + player.getDisplayName() + ")");
 
-        for (int i = 1; i <= 15; i++) {
-            titleManagerAPI.removeScoreboardValue(player, i);
-        }
+        titleManagerAPI.removeScoreboard(player);
     }
 
     /**
@@ -99,9 +105,11 @@ public class TarkanLobbyScoreboard implements Listener {
      *                       scoreboard
      */
     public void updatePlayerCountAndGameStatus(int currentPlayers) {
+        if (Bukkit.getOnlinePlayers().size() < 1) return;
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
+            ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerCountAndGameStatus(" + player.getDisplayName() + ")");
             String maxPlayers = Integer.toString(gameManager.getMaxPlayersOnline());
 
             // Game status
@@ -126,6 +134,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param playerMinigameData The players minigame data that contains the new kit they clicked.
      */
     public void updatePlayerKit(Player player, PlayerMinigameData playerMinigameData) {
+        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerKit(" + player.getDisplayName() + ")");
         Kit kit = playerMinigameData.getSelectedKit();
         String kitName = kit.getKitColor() + kit.getKitName();
         titleManagerAPI.setScoreboardValue(player, 11, trimString(MinigameMessages.TSB_KIT.toString() +
@@ -139,6 +148,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param playerMinigameData The players minigame data that contains the new team they clicked.
      */
     public void updatePlayerTeam(Player player, PlayerMinigameData playerMinigameData) {
+        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerTeam(" + player.getDisplayName() + ")");
         Team team = playerMinigameData.getSelectedTeam();
         String teamName = team.getTeamColor() + team.getTeamName();
         titleManagerAPI.setScoreboardValue(player, 10, trimString(MinigameMessages.TSB_TEAM.toString() +
@@ -151,6 +161,9 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param player The player that we are setting scores for.
      */
     private void setBoardData(Player player) {
+        if (!titleManagerAPI.hasScoreboard(player)) return;
+        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - setBoardData(" + player.getDisplayName() + ")");
+
         PlayerProfileData playerProfileData = spigotCore.getProfileManager().getProfile(player);
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
         String gameName = gameManager.getCurrentMinigameType().getFriendlyName();
@@ -215,6 +228,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * @return The trimmed string.
      */
     private String trimString(String input) {
+        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - trimString()");
         final int maxWidth = 42; // Tarkan Scoreboard length is 42.
 
         // Check to see if the input length is greater than the maxWidth of characters.
@@ -227,12 +241,16 @@ public class TarkanLobbyScoreboard implements Listener {
         }
     }
 
+    private boolean shouldAnimate = false;
+
     /**
      * This will do a small scoreboard animation letting the player know
      * we are currently waiting on more players before the core is ready
      * to begin the initial countdown.
      */
     public void animateScoreboard() {
+        if (Bukkit.getOnlinePlayers().size() < gameManager.getMinPlayersToStartGame() && !shouldAnimate) return;
+
         // Update animation frame.
         if (gameWaitingAnimate != 5) {
             gameWaitingAnimate++;
@@ -240,20 +258,26 @@ public class TarkanLobbyScoreboard implements Listener {
             gameWaitingAnimate = 1;
         }
 
-        // Loop through player list and update all players with new animation.
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasMetadata("NPC")) return;
+        if (gameLobby.isCountdownStarted() && gameLobby.getCountdown() <= 20) {
+            shouldAnimate = true;
 
-            // Make sure the player has the scoreboard.
-            if (!titleManagerAPI.hasScoreboard(player)) {
-                addPlayer(player);
-            }
+            // Loop through player list and update all players with new animation.
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (!titleManagerAPI.hasScoreboard(player)) return;
+                ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - animateScoreboard(" + player.getDisplayName() + ") -> Show countdown");
 
-            // Update game countdown
-            if (gameLobby.isCountdownStarted() && gameLobby.getCountdown() <= 20) {
+                // Update game countdown
                 String msg = MinigameMessages.TSB_STATUS.toString() + ChatColor.GREEN + "Starting in " + ChatColor.YELLOW + gameLobby.getCountdown();
                 titleManagerAPI.setScoreboardValue(player, 7, msg);
-            } else {
+
+            }
+        } else if (shouldAnimate) {
+            shouldAnimate = false;
+            // Loop through player list and update all players with new animation.
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (!titleManagerAPI.hasScoreboard(player)) return;
+                ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - animateScoreboard(" + player.getDisplayName() + ") -> Reset countdown");
+
                 updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
             }
         }
@@ -261,13 +285,25 @@ public class TarkanLobbyScoreboard implements Listener {
 
     @EventHandler
     public void onUpdateScoreboard(UpdateScoreboardEvent event) {
-        if (gameManager.getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) return;
-        setBoardData(event.getPlayer());
+        Player player = event.getPlayer();
+
+        if (gameManager.getPlayerManager().getPlayerProfileData(player).isSpectator()) return;
+        if (titleManagerAPI.hasScoreboard(player)){
+            ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - onUpdateScoreboard(" + player.getDisplayName() + ")");
+        }
+
+        setBoardData(player);
     }
 
     @EventHandler
     public void onProfileLoad(ProfileLoadedEvent event) {
-        if (gameManager.getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) return;
-        addPlayer(event.getPlayer());
+        Player player = event.getPlayer();
+
+        if (gameManager.getPlayerManager().getPlayerProfileData(player).isSpectator()) return;
+        if (!titleManagerAPI.hasScoreboard(player)) {
+            ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - onProfileLoad(" + player.getDisplayName() + ")");
+        }
+
+        addPlayer(player);
     }
 }

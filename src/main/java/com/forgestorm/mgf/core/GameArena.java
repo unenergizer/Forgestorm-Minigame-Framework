@@ -7,6 +7,7 @@ import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.mgf.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.constants.CommonSounds;
 import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import com.forgestorm.spigotcore.util.item.ItemBuilder;
@@ -76,6 +77,7 @@ public class GameArena extends BukkitRunnable implements Listener {
     @Setter
     private ArenaState arenaState = ArenaState.ARENA_WAITING;
     private Location spectatorSpawn;
+    private final boolean showDebug = true;
 
     GameArena(MinigameFramework plugin, GameManager gameManager, Minigame minigame, GameType gameType) {
         this.plugin = plugin;
@@ -91,6 +93,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * This will register stat listeners and setup the game arena.
      */
     void setupArena() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - setupArena()");
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -99,6 +102,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * arena.
      */
     void destroyArena() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - destroyArena()");
         // Unregister stat listeners
         BlockBreakEvent.getHandlerList().unregister(this);
         EntityDamageEvent.getHandlerList().unregister(this);
@@ -116,6 +120,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param player The player to add to the arena.
      */
     private void addArenaPlayer(Player player) {
+            ColorLogger.INFO.printLog(showDebug, "GameArena - addArenaPlayer()");
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
         TeamSpawnLocations teamLocations = teamSpawnLocations.get(playerMinigameData.getSelectedTeam().getIndex());
         int lastTeamSpawnIndex = teamLocations.getLastTeamSpawnIndex();
@@ -139,6 +144,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param player The player to remove.
      */
     public void removeArenaPlayer(Player player) {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - removeArenaPlayer()");
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
         playerMinigameData.setSelectedTeam(null);
         playerMinigameData.setQueuedTeam(null);
@@ -163,6 +169,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param spectator The player spectator we want to teleport.
      */
     public void teleportSpectator(Player spectator) {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - teleportSpectator()");
         CommonSounds.ACTION_FAILED.playSound(spectator);
         spectator.teleport(spectatorSpawn);
     }
@@ -173,6 +180,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param spectator The spectator to add.
      */
     public void addSpectator(Player spectator) {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - addSpectator()");
         // TODO: Give the spectator the spectator menu
 
         // Set player as spectator in their profile.
@@ -218,6 +226,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param spectator The player to remove from spectator.
      */
     public void removeSpectator(Player spectator) {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - removeSpectator()");
         // TODO: remove the spectator player
         // TODO: Remove the spectator menu
 
@@ -265,6 +274,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @return This will return the world data for one particular world.
      */
     WorldData getRandomArenaWorld() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - getRandomArenaWorld()");
         List<WorldData> worldDataList = new ArrayList<>();
         ConfigurationSection outerSection = configuration.getConfigurationSection("Worlds");
 
@@ -290,6 +300,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param worldData The worldData to use to get the YML path to the values needed.
      */
     void generateTeamSpawnLocations(WorldData worldData) {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - generateTeamSpawnLocations()");
         String path = "Worlds." + worldData.getWorldIndex();
 
         // Get spectator spawn location
@@ -330,6 +341,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * Shows hidden players.
      */
     private void showHiddenPlayers() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - showHiddenPlayers()");
         for (Player hiddenPlayer : Bukkit.getOnlinePlayers()) {
             if (hiddenPlayer.hasMetadata("NPC")) return;
             for (Player players : Bukkit.getOnlinePlayers()) {
@@ -343,6 +355,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * Hides spectators.
      */
     private void hideSpectators() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - hideSpectators()");
         PlayerManager playerManager = gameManager.getPlayerManager();
 
         for (Player spectators : Bukkit.getOnlinePlayers()) {
@@ -367,6 +380,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * that is currently loaded and being played.
      */
     void showTutorialInfo() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - showTutorialInfo()");
         arenaState = ArenaState.ARENA_TUTORIAL;
 
         //Show the core rules.
@@ -388,6 +402,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * This is the countdown that is shown after the tutorial is displayed.
      */
     private void showTutorialCountdown() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - showTutorialCountdown()");
         String timeLeft = Integer.toString(countdown);
 
         // Test if the game should end.
@@ -428,6 +443,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param sound    The sound to play when text is displayed.
      */
     private void tutorialCountdownMessage(String title, String subtitle, Sound sound) {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - tutorialCountdownMessage()");
         for (Player players : Bukkit.getOnlinePlayers()) {
             if (players.hasMetadata("NPC")) return;
             plugin.getTitleManagerAPI().sendTitles(players, title, subtitle);
@@ -439,6 +455,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * After the game play is finished we will show the game scores.
      */
     private void showScores() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - showScores()");
         arenaState = ArenaState.ARENA_SHOW_SCORES;
 
         if (countdown == 12) {
@@ -527,6 +544,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * Helper method to add all arena players.
      */
     void addAllArenaPlayers() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - addAllArenaPlayers()");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
             addArenaPlayer(player);
@@ -537,6 +555,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * Helper method to remove all arena players.
      */
     void removeAllArenaPlayers() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - removeAllArenaPlayers()");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
             removeArenaPlayer(player);
@@ -547,6 +566,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      * Helper method to remove all spectator players.
      */
     void removeAllArenaSpectators() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - removeAllArenaSpectators()");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
             removeSpectator(player);

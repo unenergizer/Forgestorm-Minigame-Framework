@@ -5,6 +5,7 @@ import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.GameArena;
 import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -37,6 +38,7 @@ public class PlayerManager implements Listener {
     private final MinigameFramework plugin;
     private final GameManager gameManager;
     private final Map<Player, PlayerMinigameData> playerProfiles = new HashMap<>();
+    private final boolean showDebug = true;
 
     public PlayerManager(MinigameFramework plugin, GameManager gameManager) {
         this.plugin = plugin;
@@ -103,7 +105,7 @@ public class PlayerManager implements Listener {
      * @param player The player who left the server.
      * @return A quit message for server players.
      */
-    private String playerQuit(Player player) {
+    private String onPlayerQuit(Player player) {
         PlayerMinigameData playerMinigameData = playerProfiles.get(player);
         String playerName = player.getName();
         boolean isSpectator = playerMinigameData.isSpectator();
@@ -115,6 +117,7 @@ public class PlayerManager implements Listener {
             ///////////////////////////
             //// LOBBY PLAYER QUIT ////
             ///////////////////////////
+            ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Lobby Quit");
 
             // Remove from the core lobby.
             GameLobby gameLobby = gameManager.getGameLobby();
@@ -142,6 +145,7 @@ public class PlayerManager implements Listener {
                 ////////////////////////
                 //// SPECTATOR QUIT ////
                 ////////////////////////
+                ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Spectator Quit");
 
                 // Remove spectator from the arena.
                 gameArena.removeSpectator(player);
@@ -155,6 +159,7 @@ public class PlayerManager implements Listener {
                 ///////////////////////////
                 //// ARENA PLAYER QUIT ////
                 ///////////////////////////
+                ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Arena Player Quit");
 
                 // Remove the player from the arena.
                 gameArena.removeArenaPlayer(player);
@@ -187,6 +192,7 @@ public class PlayerManager implements Listener {
         createProfile(player);
 
         if (gameManager.isInLobby()) {
+            ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerJoin() -> Lobby Join");
             //////////////////
             /// LOBBY JOIN ///
             //////////////////
@@ -209,6 +215,7 @@ public class PlayerManager implements Listener {
             gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
 
         } else {
+            ColorLogger.INFO.printLog(showDebug, "PlayerManager -onPlayerJoin() -> Spectator Join");
             //////////////////////
             /// SPECTATOR JOIN ///
             //////////////////////
@@ -228,7 +235,6 @@ public class PlayerManager implements Listener {
             playerMinigameData.backupInventoryContents();
             gameManager.getGameArena().addSpectator(player);
             gameManager.getGameArena().teleportSpectator(player);
-
         }
     }
 
@@ -240,7 +246,7 @@ public class PlayerManager implements Listener {
      */
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
-        event.setQuitMessage(playerQuit(event.getPlayer()));
+        event.setQuitMessage(onPlayerQuit(event.getPlayer()));
     }
 
     /**
@@ -251,6 +257,6 @@ public class PlayerManager implements Listener {
      */
     @EventHandler
     public void onPlayerKick(PlayerKickEvent event) {
-        event.setLeaveMessage(playerQuit(event.getPlayer()));
+        event.setLeaveMessage(onPlayerQuit(event.getPlayer()));
     }
 }

@@ -9,8 +9,8 @@ import com.forgestorm.mgf.core.team.TeamManager;
 import com.forgestorm.mgf.core.world.TeleportFix2;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.mgf.util.display.TipAnnouncer;
+import com.forgestorm.mgf.util.logger.ColorLogger;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
-import com.forgestorm.spigotcore.events.UpdateScoreboardEvent;
 import com.forgestorm.spigotcore.player.DoubleJump;
 import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import lombok.Getter;
@@ -61,13 +61,14 @@ public class GameLobby extends BukkitRunnable implements Listener {
     private final PlatformBuilder platformBuilder = new PlatformBuilder();
     private final BossBarAnnouncer bar = new BossBarAnnouncer(MinigameMessages.BOSS_BAR_LOBBY_MESSAGE.toString());
     private final Location spawn = new Location(Bukkit.getWorld("mg-lobby"), 0.5, 101, 0.5);
+    private final int maxCountdown = 30;
+    private final boolean showDebug = true;
     private DoubleJump doubleJump;
     private TipAnnouncer tipAnnouncer;
     private KitManager kitManager;
     private TeamManager teamManager;
     private boolean cancelTask = false;
     private boolean countdownStarted = false;
-    private final int maxCountdown = 30;
     private int countdown = maxCountdown;
     private TeleportFix2 teleportFix2 = new TeleportFix2();
 
@@ -83,6 +84,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * This will setup a lobby for the supplied minigame.
      */
     void setupLobby() {
+        ColorLogger.INFO.printLog(showDebug, "GameLobby - setupLobby()");
 
         // Kit Setup
         kitManager = new KitManager(plugin, gameManager, platformBuilder, minigame.getKits(), minigame.getLobbyWorld());
@@ -108,6 +110,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * This will remove the lobby from the core world.
      */
     void destroyLobby() {
+        ColorLogger.INFO.printLog(showDebug, "GameLobby - destroyLobby()");
         cancelTask = true;
 
         // Destroy Kit Manager
@@ -135,6 +138,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * @param player The player we are going to setup.
      */
     public void setupPlayer(Player player) {
+        ColorLogger.INFO.printLog(showDebug, "GameLobby - setupPlayer()");
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
 
         // Set default kit
@@ -165,6 +169,9 @@ public class GameLobby extends BukkitRunnable implements Listener {
         if (playerMinigameData.getArmorContents() != null || playerMinigameData.getInventoryContents() != null) {
             playerMinigameData.restoreInventoryContents();
         }
+
+        // Add the scoreboard if the players profile has been loaded in SpigotCore plugin.
+        if (plugin.getSpigotCore().getProfileManager().getProfile(player) != null) tarkanLobbyScoreboard.addPlayer(player);
     }
 
     /**
@@ -175,6 +182,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * @param player The player we will remove.
      */
     public void removePlayer(Player player, boolean playerQuit) {
+        ColorLogger.INFO.printLog(showDebug, "GameLobby - removePlayer()");
         // Remove the scoreboard.
         tarkanLobbyScoreboard.removePlayer(player);
 
@@ -199,21 +207,6 @@ public class GameLobby extends BukkitRunnable implements Listener {
     }
 
     /**
-     * This will reset all of the players scoreboards.
-     * This is done after players have been assigned a
-     * kit and a team.
-     */
-    void resetPlayerScoreboards() {
-        // Reset all player scoreboards.  This must be done after
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasMetadata("NPC")) return;
-
-            // Setup the player scoreboard.
-            Bukkit.getPluginManager().callEvent(new UpdateScoreboardEvent(player));
-        }
-    }
-
-    /**
      * Here we will do the lobby countdown.
      */
     @Override
@@ -232,17 +225,20 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * are met. If the countdown is successful, we will start the core.
      */
     private void performLobbyCountdown() {
-        // Do lobby countdown
         if (!gameManager.isInLobby()) return;
         if (!gameManager.isCurrentArenaWorldLoaded()) return;
+
+        // Do lobby countdown.
         if (Bukkit.getOnlinePlayers().size() >= gameManager.getMinPlayersToStartGame()) {
+            if (!countdownStarted) ColorLogger.INFO.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown started!");
+
             countdownStarted = true;
 
             // Show countdown message to the players.
             if (countdown == 30 || countdown == 20 || countdown == 10 || countdown <= 5 && countdown > 1) {
                 String message = MinigameMessages.GAME_TIME_REMAINING_PLURAL.toString();
 
-                for (Player players: Bukkit.getOnlinePlayers()) {
+                for (Player players : Bukkit.getOnlinePlayers()) {
                     if (players.hasMetadata("NPC")) return;
                     plugin.getTitleManagerAPI().sendActionbar(players, message.replace("%s", Integer.toString(countdown)));
                     players.playSound(players.getLocation(), Sound.BLOCK_NOTE_PLING, 1f, 1f);
@@ -251,7 +247,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
                 String message = MinigameMessages.GAME_TIME_REMAINING_SINGULAR.toString();
 
-                for (Player players: Bukkit.getOnlinePlayers()) {
+                for (Player players : Bukkit.getOnlinePlayers()) {
                     if (players.hasMetadata("NPC")) return;
                     plugin.getTitleManagerAPI().sendActionbar(players, message);
                     players.playSound(players.getLocation(), Sound.BLOCK_NOTE_HARP, 1f, 1f);
@@ -263,7 +259,8 @@ public class GameLobby extends BukkitRunnable implements Listener {
             }
 
             countdown--;
-        } else {
+        } else if (countdownStarted) {
+            ColorLogger.INFO.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown canceled!");
 
             // If the countdown message does not equal the maxCountdown time,
             // then it is safe to assume that a countdown started, but then a
@@ -276,7 +273,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
                 // Send countdown fail message.
                 String message = MinigameMessages.GAME_COUNTDOWN_NOT_ENOUGH_PLAYERS.toString();
-                for (Player players: Bukkit.getOnlinePlayers()) {
+                for (Player players : Bukkit.getOnlinePlayers()) {
                     if (players.hasMetadata("NPC")) return;
 
                     //Show message
@@ -293,6 +290,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * Helper method to setup all players currently in the lobby.
      */
     void setupAllPlayers() {
+        ColorLogger.INFO.printLog(showDebug, "GameLobby - setupAllPlayers()");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
             setupPlayer(player);
@@ -303,6 +301,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * Helper method to remove all players currently in the lobby.
      */
     void removeAllPlayers() {
+        ColorLogger.INFO.printLog(showDebug, "GameLobby - removeAllPlayers()");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
             removePlayer(player, false);
@@ -316,6 +315,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * @param player The player to teleport.
      */
     private void sendToSpawn(Player player) {
+        ColorLogger.INFO.printLog(showDebug, "GameLobby - sendToSpawn()");
         //Teleport the player.
         player.teleport(spawn);
         player.setFallDistance(0F);
@@ -332,15 +332,18 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * from catching fire in the lobby. This usually happens
      * when we use a Zombie or a Skeleton as a kit or team
      * entity.
+     *
      * @param event This is a Bukkit EntityCombustEvent.
      */
     @EventHandler
-    public void onEntityCombust(EntityCombustEvent event) { event.setCancelled(true); }
+    public void onEntityCombust(EntityCombustEvent event) {
+        event.setCancelled(true);
+    }
 
     /**
      * We listen to the EntityDamageEvent to prevent players
      * from taking damage while in the core lobby.
-     *
+     * <p>
      * Additionally we listen for VOID damage. If a player
      * jumps into the void, we will teleport them back to
      * the main spawn position.
@@ -367,15 +370,19 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * We listen to the FoodLevelChangeEvent to prevent players
      * food levels from to prevent them from starving and/or
      * loosing hunger.
+     *
      * @param event This is a Bukkit FoodLevelChangeEvent.
      */
     @EventHandler
-    public void onFoodLevelChange(FoodLevelChangeEvent event) { event.setCancelled(true); }
+    public void onFoodLevelChange(FoodLevelChangeEvent event) {
+        event.setCancelled(true);
+    }
 
     /**
      * We listen to the ItemSpawnEvent to watch for and prevent
      * the spawning of eggs. A egg will spawn from chickens who
      * are used as kit or as team entities.
+     *
      * @param event This is a Bukkit ItemSpawnEvent.
      */
     @EventHandler
@@ -391,6 +398,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * We listen to the PlayerDropItemEvent to make sure players
      * are not dropping the WATCH device which will take them
      * back to the main hub.
+     *
      * @param event This is a Bukkit PlayerDropItemEvent.
      */
     @EventHandler
@@ -403,11 +411,13 @@ public class GameLobby extends BukkitRunnable implements Listener {
      * from having weather changes.  The rain can become really
      * annoying to players, so we will disable that functionality
      * here.
+     *
      * @param event This is a Bukkit WeatherChangeEvent.
      */
     @EventHandler
-    public void onWeatherChange(WeatherChangeEvent event) { if (event.toWeatherState()) event.setCancelled(true); }
-
+    public void onWeatherChange(WeatherChangeEvent event) {
+        if (event.toWeatherState()) event.setCancelled(true);
+    }
 
 
     @EventHandler

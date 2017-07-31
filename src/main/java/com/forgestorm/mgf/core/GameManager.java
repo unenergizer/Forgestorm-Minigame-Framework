@@ -8,6 +8,7 @@ import com.forgestorm.mgf.core.score.ScoreManager;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.core.world.WorldManager;
 import com.forgestorm.mgf.player.PlayerManager;
+import com.forgestorm.mgf.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.events.UpdateScoreboardEvent;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,8 +19,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*********************************************************************************
  *
@@ -55,6 +56,7 @@ public class GameManager extends BukkitRunnable {
     private WorldData currentArenaWorldData;
     private boolean currentArenaWorldLoaded = false;
     private boolean inLobby = true;
+    private final boolean showDebug = true;
 
     public GameManager(MinigameFramework plugin) {
         this.plugin = plugin;
@@ -77,6 +79,7 @@ public class GameManager extends BukkitRunnable {
      * Games that will be played are assigned in the config file.
      */
     private void selectGame() {
+        ColorLogger.INFO.printLog(showDebug, "GameManager - selectGame()");
         int totalGames = gamesToPlay.size() - 1;
 
         // Basic game selection based on array list index.
@@ -98,6 +101,7 @@ public class GameManager extends BukkitRunnable {
      * This will setup the current minigame lobby and arena.
      */
     private void setupGame() {
+        ColorLogger.INFO.printLog(showDebug, "GameManager - setupGame()");
         // Set defaults
         inLobby = true;
         currentArenaWorldLoaded = false;
@@ -106,7 +110,7 @@ public class GameManager extends BukkitRunnable {
         gameLobby = new GameLobby(plugin, this, currentMinigame);
         gameLobby.setupLobby();
         gameLobby.setupAllPlayers();
-        gameLobby.resetPlayerScoreboards();
+        //gameLobby.resetPlayerScoreboards();
         gameLobby.runTaskTimer(plugin, 0, 20);
 
         // Create Arena
@@ -143,6 +147,7 @@ public class GameManager extends BukkitRunnable {
      * do the proper countdowns.
      */
     void switchToArena() {
+        ColorLogger.INFO.printLog(showDebug, "GameManager - switchToArena()");
         inLobby = false;
 
         // Stop lobby code and remove lobby players.
@@ -155,13 +160,11 @@ public class GameManager extends BukkitRunnable {
         gameArena.showTutorialInfo();
 
         // Build stat type lists for scores.
-        List<Player> players = new ArrayList<>();
-        Bukkit.getOnlinePlayers().forEach(player -> {
-            if (player.hasMetadata("NPC")) return;
-            if (!playerManager.getPlayerProfileData(player).isSpectator()) {
-                players.add(player);
-            }
-        });
+        List<Player> players = Bukkit.getOnlinePlayers().stream()
+                .filter(player -> !player.hasMetadata("NPC"))
+                .filter(player -> !playerManager.getPlayerProfileData(player).isSpectator())
+                .collect(Collectors.toList());
+
         scoreManager.initStats(players, currentMinigame.getScoreData());
         scoreManager.initWinConditions(currentMinigame.getScoreData());
     }
@@ -175,6 +178,7 @@ public class GameManager extends BukkitRunnable {
      */
     @SuppressWarnings("WeakerAccess")
     public void endGame(boolean startNewGame) {
+        ColorLogger.INFO.printLog(showDebug, "GameManager - endGame()");
 
         // Disable the lobby and the arena
         clearWorldEntities(currentArenaWorldData.getWorldName());
@@ -232,6 +236,7 @@ public class GameManager extends BukkitRunnable {
      * @param worldName The name of the world to clear entities in.
      */
     private void clearWorldEntities(String worldName) {
+        ColorLogger.INFO.printLog(showDebug, "GameManager - clearWorldEntities()");
         for (Entity entity : Bukkit.getWorld(worldName).getEntities()) {
             if (entity instanceof Player) return;
             entity.remove();
@@ -246,6 +251,7 @@ public class GameManager extends BukkitRunnable {
      * @return True if the request was a success, false otherwise.
      */
     public boolean setMaxPlayersOnline(CommandSender commandSender, int num) {
+        ColorLogger.INFO.printLog(showDebug, "GameManager - setMaxPlayersOnline()");
         // Make sure the max players online is greater than the minimum needed to start a game.
         if (num < minPlayersToStartGame) {
             commandSender.sendMessage(MinigameMessages.ADMIN.toString() + ChatColor.RED + "" + ChatColor.BOLD +
