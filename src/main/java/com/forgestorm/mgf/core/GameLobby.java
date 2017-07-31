@@ -14,6 +14,7 @@ import com.forgestorm.mgf.util.world.PlatformBuilder;
 import com.forgestorm.spigotcore.player.DoubleJump;
 import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -69,6 +70,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
     private TeamManager teamManager;
     private boolean cancelTask = false;
     private boolean countdownStarted = false;
+    @Setter
     private int countdown = maxCountdown;
     private TeleportFix2 teleportFix2 = new TeleportFix2();
 
@@ -229,7 +231,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
         if (!gameManager.isCurrentArenaWorldLoaded()) return;
 
         // Do lobby countdown.
-        if (Bukkit.getOnlinePlayers().size() >= gameManager.getMinPlayersToStartGame()) {
+        if (shouldMinigameStart()) {
             if (!countdownStarted) ColorLogger.INFO.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown started!");
 
             countdownStarted = true;
@@ -325,6 +327,10 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         //Give player potion effect.
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 3 * 20, 100));
+    }
+
+    public boolean shouldMinigameStart() {
+        return Bukkit.getOnlinePlayers().size() >= gameManager.getMinPlayersToStartGame();
     }
 
     /**

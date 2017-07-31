@@ -113,7 +113,7 @@ public class TarkanLobbyScoreboard implements Listener {
             String maxPlayers = Integer.toString(gameManager.getMaxPlayersOnline());
 
             // Game status
-            if (currentPlayers >= gameManager.getMinPlayersToStartGame()) {
+            if (gameLobby.shouldMinigameStart()) {
                 titleManagerAPI.setScoreboardValue(player, 7, MinigameMessages.TSB_STATUS.toString() +
                         MinigameMessages.SB_GAME_STATUS_READY.toString());
             } else {
@@ -249,7 +249,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * to begin the initial countdown.
      */
     public void animateScoreboard() {
-        if (Bukkit.getOnlinePlayers().size() < gameManager.getMinPlayersToStartGame() && !shouldAnimate) return;
+        if (gameLobby.shouldMinigameStart() && !shouldAnimate) return;
 
         // Update animation frame.
         if (gameWaitingAnimate != 5) {
