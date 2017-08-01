@@ -5,6 +5,7 @@ import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.GameArena;
 import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.spigotcore.constants.CommonSounds;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -30,10 +31,12 @@ import org.bukkit.entity.Player;
 
 public class Admin implements CommandExecutor {
 
-    private static final String ERROR = ChatColor.GRAY + "[" + ChatColor.RED + "!" + ChatColor.GRAY + "] " + ChatColor.RESET;
+    private static final String ERROR = MinigameMessages.ALERT.toString();
+    private final MinigameFramework plugin;
     private final GameManager gameManager;
 
     public Admin(MinigameFramework plugin) {
+        this.plugin = plugin;
         this.gameManager = plugin.getGameManager();
     }
 
@@ -57,7 +60,19 @@ public class Admin implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String label, String[] args) {
 
         // Send blank string ahead of other messages if it's a player commandSender.
-        if (commandSender instanceof Player) commandSender.sendMessage("");
+        if (commandSender instanceof Player) {
+            Player player = (Player) commandSender;
+            player.sendMessage("");
+
+            // Make sure the player is an admin and can run these commands.
+            if (!plugin.getSpigotCore().getProfileManager().getProfile(player).isAdmin()) {
+                player.sendMessage(MinigameMessages.ALERT.toString() + MinigameMessages.COMMAND_ADMIN_NOT_OP.toString());
+                CommonSounds.ACTION_FAILED.playSound(player);
+                return false;
+            }
+        }
+
+
 
         //Check command args
         if (args.length == 1) {
@@ -67,12 +82,12 @@ public class Admin implements CommandExecutor {
                     GameLobby gameLobby = gameManager.getGameLobby();
 
                     if (!gameManager.isInLobby()) {
-                        commandSender.sendMessage(ERROR + ChatColor.RED + "Must be in the game lobby to force start!");
+                        commandSender.sendMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_START_ERROR_01.toString());
                         return false;
                     }
 
                     if (!gameLobby.shouldMinigameStart()) {
-                        commandSender.sendMessage(ERROR + ChatColor.RED + "Not enough players to start.");
+                        commandSender.sendMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_START_ERROR_02.toString());
                         String playerCount = Integer.toString(Bukkit.getOnlinePlayers().size());
                         commandSender.sendMessage(ERROR + ChatColor.AQUA + "Run " + ChatColor.DARK_AQUA +
                                 "/mga minp " + playerCount + ChatColor.AQUA + " to change the minimal players to start.");
@@ -80,23 +95,23 @@ public class Admin implements CommandExecutor {
                     }
 
                     if (gameLobby.getCountdown() <= 2) {
-                        commandSender.sendMessage(ERROR + ChatColor.RED + "The game is already about to start.");
+                        commandSender.sendMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_START_ERROR_03.toString());
                         return false;
                     }
 
                     gameLobby.setCountdown(1);
-                    Bukkit.broadcastMessage(ERROR + ChatColor.GREEN + "" + ChatColor.BOLD + "An administrator has started the game.");
+                    Bukkit.broadcastMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_START.toString());
                     break;
                 case "stop":
                     GameArena.ArenaState arenaState = gameManager.getGameArena().getArenaState();
 
                     if (arenaState == GameArena.ArenaState.ARENA_EXIT || arenaState == GameArena.ArenaState.ARENA_SHOW_SCORES) {
-                        commandSender.sendMessage(ERROR + ChatColor.RED + "The game is about to end.");
+                        commandSender.sendMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_STOP_ERROR_01.toString());
                         return false;
                     }
 
-                    gameManager.endGame(true);
-                    Bukkit.broadcastMessage(ERROR + ChatColor.RED + "" + ChatColor.BOLD + "An administrator has stopped the game.");
+                    gameManager.getCurrentMinigame().endMinigame();
+                    Bukkit.broadcastMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_STOP.toString());
                     break;
             }
         } else if (args.length == 2) {
@@ -130,6 +145,8 @@ public class Admin implements CommandExecutor {
                     break;
             }
 
+        } else {
+            commandSender.sendMessage(ERROR + MinigameMessages.COMMAND_ADMIN_UNKNOWN.toString());
         }
 
         return false;

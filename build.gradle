@@ -107,7 +107,7 @@ repositories {
 // ========================= Dependencies ========================= //
 
 dependencies {
-    provided group: 'org.spigotmc', name: 'spigot-api', version: '1.11-R0.1-SNAPSHOT'
+    provided group: 'org.spigotmc', name: 'spigot-api', version: '1.12-R0.1-SNAPSHOT'
     provided group: 'org.projectlombok', name: 'lombok', version: '1.16.10'
     provided group: 'net.md-5', name: 'bungeecord-api', version: '1.10-SNAPSHOT'
     provided group: 'io.puharesource.mc', name: 'TitleManager', version: '2.0.0'

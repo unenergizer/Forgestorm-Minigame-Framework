@@ -23,15 +23,20 @@ public enum MinigameMessages {
 	//Debug messages
 	BOSS_BAR_LOBBY_MESSAGE("&e&lFORGESTORM &7&l- &a&lMINIGAMES"),
 	BOSS_BAR_SPECTATOR_MESSAGE("&e&lFORGESTORM &7&l- &a&lMINIGAMES"),
+
+	//Notification
+	ALERT("&7[&c!&7]&r "),
 	
 	//Commands
 	ADMIN("&7[&cAdmin&7] "),
 	COMMAND_ADMIN_NOT_OP("&cYou do not have permission to do this."),
-	COMMAND_ADMIN_UNKNOWN("&cCommand unknown! Use &a/admin help &cfor more information!"),
-	COMMAND_ADMIN_GAMES_PLAYED("&e&lTotal games played: &c%s"),
-	COMMAND_ADMIN_END_GAME("&c&lThe minigame has just been shut down. Returning to minigame lobby."),
-	COMMAND_ADMIN_END_ERROR("&c&lYou can not end a minigame if the minigame is not running."),
-	COMMAND_ADMIN_FORCE_START("&c&lYou have just force started a minigame."),
+	COMMAND_ADMIN_UNKNOWN("&cCommand unknown!"),
+    COMMAND_ADMIN_FORCE_STOP("&c&lAn administrator has stopped the game."),
+    COMMAND_ADMIN_FORCE_STOP_ERROR_01("&cThe game is about to end."),
+    COMMAND_ADMIN_FORCE_START("&a&lAn administrator has started the game."),
+    COMMAND_ADMIN_FORCE_START_ERROR_01("&cMust be in the game lobby to force start!"),
+    COMMAND_ADMIN_FORCE_START_ERROR_02("&cNot enough players to start."),
+    COMMAND_ADMIN_FORCE_START_ERROR_03("&cThe game is already about to start."),
 	
 	//Team MinigameMessages
 	TEAM_QUEUE_PLACED("&eYou were placed in a queue to join this team."),
@@ -44,7 +49,8 @@ public enum MinigameMessages {
 	KIT_ALREADY_HAVE_KIT("&7(you are using this kit)"),
 	
 	//Game display messages
-	GAME_COUNTDOWN_NOT_ENOUGH_PLAYERS("&c&lCountdown canceled! Not enough players!"),
+    GAME_END_RETURNING_TO_LOBBY("&6Returning to lobby..."),
+	GAME_COUNTDOWN_NOT_ENOUGH_PLAYERS("&c&lNot enough players! Quitting game..."),
 	GAME_COUNTDOWN_ALL_TEAMS_NEED_PLAYERS("&c&lCountdown canceled! All teams need players!"),
 	GAME_BAR_KIT("&8&l&m----------------&r&l &l &l &6&lKit Select&l &l &l &8&l&m----------------"),
 	GAME_BAR_TEAM("&8&l&m---------------&r&l &l &l &3&lTeam Select&l &l &l &8&l&m----------------"),

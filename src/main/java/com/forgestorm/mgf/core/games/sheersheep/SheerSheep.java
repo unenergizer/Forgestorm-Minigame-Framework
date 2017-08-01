@@ -72,8 +72,12 @@ public class SheerSheep extends Minigame implements Listener {
     public void disableGame() {
         // Cancel threads
         spawnSheep.cancelSheepSpawn();
-        arenaPointsCounter.setCancelTask(true);
-        arenaPointsCounter.removeAllPlayers();
+
+        // This can be null if the game ends during the tutorial stage.
+        if (arenaPointsCounter != null) {
+            arenaPointsCounter.setCancelTask(true);
+            arenaPointsCounter.removeAllPlayers();
+        }
 
         // Unregister listeners
         PlayerShearEntityEvent.getHandlerList().unregister(this);

@@ -27,8 +27,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -105,6 +107,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         ColorLogger.INFO.printLog(showDebug, "GameArena - destroyArena()");
         // Unregister stat listeners
         BlockBreakEvent.getHandlerList().unregister(this);
+        BlockPlaceEvent.getHandlerList().unregister(this);
         EntityDamageEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
         PlayerPickupItemEvent.getHandlerList().unregister(this);
@@ -408,9 +411,11 @@ public class GameArena extends BukkitRunnable implements Listener {
         // Test if the game should end.
         if (shouldMinigameEnd()) {
             cancel();
-            Bukkit.broadcastMessage(" ");
-            Bukkit.broadcastMessage(ChatColor.RED + "" + ChatColor.BOLD + "Not enough players! Quitting game!");
             gameManager.endGame(true);
+
+            // Send error message.
+            Bukkit.broadcastMessage(" ");
+            Bukkit.broadcastMessage(MinigameMessages.ALERT.toString() + MinigameMessages.GAME_COUNTDOWN_NOT_ENOUGH_PLAYERS.toString());
         }
 
         // Do the tutorial countdown.
@@ -460,6 +465,14 @@ public class GameArena extends BukkitRunnable implements Listener {
 
         if (countdown == 12) {
             Map<Player, Double> finalScores = plugin.getGameManager().getScoreManager().getFinalScore();
+
+            // The map should only be null or empty if the game is forced closed.
+            if (finalScores == null || finalScores.isEmpty()) {
+                // Set to 4 so on next iteration it shows the returning to lobby message.
+                countdown = 4;
+                return;
+            }
+
             List<Player> sortedPlayers = new ArrayList<>();
 
             // TODO: Fix redundant sorting...
@@ -508,7 +521,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         }
 
         if (countdown == 3) {
-            Bukkit.broadcastMessage(ChatColor.GOLD + "Returning to lobby...");
+            Bukkit.broadcastMessage(MinigameMessages.GAME_END_RETURNING_TO_LOBBY.toString());
         }
 
         // Scores Countdown
@@ -573,9 +586,42 @@ public class GameArena extends BukkitRunnable implements Listener {
         }
     }
 
-    @EventHandler
+    /**
+     * This is a check to see if the game should end.
+     * If there aren't enough players, then we should
+     * end the games.  Added to ability to make sure
+     * that when we run this check we are filtering
+     * out spectator players.
+     */
+    private boolean shouldMinigameEnd() {
+        int minigamePlayers = 0;
+        boolean shouldEnd = false;
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+            if (playerMinigameData == null || playerMinigameData.isSpectator()) continue;
+            minigamePlayers++;
+        }
+
+        if (minigamePlayers < gameManager.getMinPlayersToStartGame()) {
+            shouldEnd = true;
+
+            // Send error message.
+            Bukkit.broadcastMessage(" ");
+            Bukkit.broadcastMessage(MinigameMessages.ALERT.toString() + MinigameMessages.GAME_COUNTDOWN_NOT_ENOUGH_PLAYERS.toString());
+        }
+
+        return shouldEnd;
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (arenaState == ArenaState.ARENA_TUTORIAL) event.setCancelled(true);
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        event.setCancelled(true);
     }
 
     /**
@@ -584,8 +630,14 @@ public class GameArena extends BukkitRunnable implements Listener {
      *
      * @param event This is a Bukkit EntityDamageEvent.
      */
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onEntityDamage(EntityDamageEvent event) {
+        if (arenaState == ArenaState.ARENA_SHOW_SCORES || arenaState == ArenaState.ARENA_EXIT) {
+            // Prevent any addition entity damage when the game is finally finished.
+            event.setCancelled(true);
+            return;
+        }
+
         if (event.getCause() != EntityDamageEvent.DamageCause.VOID) return;
         if (!(event.getEntity() instanceof Player)) return;
         Player player = (Player) event.getEntity();
@@ -609,7 +661,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         }.runTaskLater(plugin, 1L);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
@@ -619,23 +671,21 @@ public class GameArena extends BukkitRunnable implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
         event.setCancelled(true);
     }
 
     /**
      * Prevent spectators from interacting with the environment.
-     *
-     * @param event
      */
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onSpectatorInteract(PlayerInteractEvent event) {
         if (!playerManager.getPlayerProfileData(event.getPlayer()).isSpectator()) return;
         event.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerMove(PlayerMoveEvent event) {
 
         // Stop the player from moving if the game is showing the rules.
@@ -666,23 +716,14 @@ public class GameArena extends BukkitRunnable implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerKick(PlayerKickEvent event) {
         if (shouldMinigameEnd()) minigame.endMinigame();
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (shouldMinigameEnd()) minigame.endMinigame();
-    }
-
-    /**
-     * This is a check to see if the game should end.
-     * If there aren't enough players, then we should
-     * end the games.
-     */
-    private boolean shouldMinigameEnd() {
-        return Bukkit.getOnlinePlayers().size() < gameManager.getMinPlayersToStartGame();
     }
 
     /**
