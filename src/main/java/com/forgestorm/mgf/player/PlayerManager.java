@@ -5,7 +5,7 @@ import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.GameArena;
 import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.util.logger.ColorLogger;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

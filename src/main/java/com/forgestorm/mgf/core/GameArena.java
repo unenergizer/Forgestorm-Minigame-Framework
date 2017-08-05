@@ -7,10 +7,10 @@ import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
-import com.forgestorm.mgf.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.constants.CommonSounds;
 import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import com.forgestorm.spigotcore.util.item.ItemBuilder;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import com.forgestorm.spigotcore.util.text.CenterChatText;
 import lombok.Getter;
@@ -230,7 +230,6 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     public void removeSpectator(Player spectator) {
         ColorLogger.INFO.printLog(showDebug, "GameArena - removeSpectator()");
-        // TODO: remove the spectator player
         // TODO: Remove the spectator menu
 
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(spectator);

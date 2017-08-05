@@ -123,6 +123,7 @@ public class SheerSheep extends Minigame implements Listener {
     public List<ScoreData> getScoreData() {
         List<ScoreData> statTypes = new ArrayList<>();
         statTypes.add(new ScoreData(mainStatType, true, 80.0));
+        statTypes.add(new ScoreData(StatType.FIRST_KILL, false, null));
         return statTypes;
     }
 
