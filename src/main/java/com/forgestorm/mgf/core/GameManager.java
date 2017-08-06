@@ -190,8 +190,7 @@ public class GameManager extends BukkitRunnable {
             gameLobby.removeAllPlayers();
         } else {
             // Remove arena players and spectators.
-            gameArena.removeAllArenaPlayers();
-            gameArena.removeAllArenaSpectators();
+            gameArena.removePlayersFromArena();
         }
 
         // Update database

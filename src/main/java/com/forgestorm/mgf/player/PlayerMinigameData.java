@@ -45,6 +45,7 @@ public class PlayerMinigameData {
     private Team queuedTeam;
     private boolean isSpectator = false;
     private Location arenaSpawnLocation;
+    private boolean inventoryBackedUp = false;
     private ItemStack[] inventoryContents;
     private ItemStack[] armorContents;
 

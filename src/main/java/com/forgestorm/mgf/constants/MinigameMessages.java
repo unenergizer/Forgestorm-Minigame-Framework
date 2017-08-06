@@ -81,14 +81,11 @@ public enum MinigameMessages {
     TSB_BLANK_LINE_4("&r&r&r&r"),
 
 	//Menu Items
-	MENU_NAME_TRACKER("Player Tracker"),
-	MENU_NAME_SPECTATOR("Spectator Menu"),
-	MENU_ITEM_SPECTATOR_NO_SPEED("No Speed"),
-	MENU_ITEM_SPECTATOR_SPEED_1("Speed 1"),
-	MENU_ITEM_SPECTATOR_SPEED_2("Speed 2"),
-	MENU_ITEM_SPECTATOR_SPEED_3("Speed 3"),
-	MENU_ITEM_SPECTATOR_SPEED_4("Speed 4"),
-	MENU_ITEM_SPECTATOR_TRACK_PLAYERS("Track Players");
+	MENU_ITEM_SPECTATOR_NO_SPEED("&eDefault Speed"),
+	MENU_ITEM_SPECTATOR_SPEED_1("&eSpeed 1"),
+	MENU_ITEM_SPECTATOR_SPEED_2("&eSpeed 2"),
+	MENU_ITEM_SPECTATOR_SPEED_3("&eSpeed 3"),
+	MENU_ITEM_SPECTATOR_SPEED_4("&eSpeed 4");
 	
 	private String message;
 	

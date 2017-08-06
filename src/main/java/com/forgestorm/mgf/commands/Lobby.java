@@ -1,6 +1,8 @@
 package com.forgestorm.mgf.commands;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameArena;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.AllArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -26,13 +28,34 @@ import org.bukkit.entity.Player;
 @AllArgsConstructor
 public class Lobby implements CommandExecutor {
 
-	private final MinigameFramework plugin;
+    private final MinigameFramework plugin;
 
-	@Override
-	public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-		if (sender instanceof Player) {
-			plugin.getBungeecord().connectToBungeeServer((Player) sender, "hub-01");
-		}
-		return false;
-	}
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+
+            // Minigame arena exit.
+            // Restore player inventory!!
+            if (!plugin.getGameManager().isInLobby()) {
+                GameArena gameArena = plugin.getGameManager().getGameArena();
+
+                // Check if arena player quit or spectator quit.
+                if (!plugin.getGameManager().getPlayerManager().getPlayerProfileData(player).isSpectator()) {
+                    // Arena player quit
+                    ColorLogger.INFO.printLog("/lobby command ran! " + player.getDisplayName() + " arena quit!");
+                    gameArena.removeArenaPlayer(player, true);
+
+                } else {
+                    // Spectator player quit
+				    gameArena.removeSpectator(player);
+                    ColorLogger.INFO.printLog("/lobby command ran! " + player.getDisplayName() + " spectator quit!");
+                }
+            }
+
+            // Now teleport to lobby.
+            plugin.getSpigotCore().getBungeecord().connectToBungeeServer(player, "hub-01");
+        }
+        return false;
+    }
 }

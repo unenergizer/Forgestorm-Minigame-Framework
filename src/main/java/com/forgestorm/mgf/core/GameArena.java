@@ -4,6 +4,8 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.games.GameType;
 import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.menus.SpectatorFlySpeed;
+import com.forgestorm.mgf.core.menus.SpectatorPlayerTracker;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
@@ -29,6 +31,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -71,15 +74,18 @@ public class GameArena extends BukkitRunnable implements Listener {
     private final PlayerManager playerManager;
     private final Minigame minigame;
     private final Configuration configuration;
+    private final ItemStack spectatorServerExit = new ItemBuilder(Material.WATCH).setTitle(ChatColor.GREEN + "" + ChatColor.BOLD + "Back To Lobby").build(true);
+    private final ItemStack trackPlayers = new ItemBuilder(Material.SKULL_ITEM).setTitle(ChatColor.LIGHT_PURPLE + "Track Players").build(true);
+    private final ItemStack flySpeed = new ItemBuilder(Material.MINECART).setTitle(ChatColor.YELLOW + "Move Speed").build(true);
     private final BossBarAnnouncer spectatorBar = new BossBarAnnouncer(MinigameMessages.BOSS_BAR_SPECTATOR_MESSAGE.toString());
     private final List<TeamSpawnLocations> teamSpawnLocations = new ArrayList<>();
     private final int maxCountdown = 13;
+    private final boolean showDebug = true;
     private int countdown = maxCountdown;
     private int lastTeamSpawned = 0;
     @Setter
     private ArenaState arenaState = ArenaState.ARENA_WAITING;
     private Location spectatorSpawn;
-    private final boolean showDebug = true;
 
     GameArena(MinigameFramework plugin, GameManager gameManager, Minigame minigame, GameType gameType) {
         this.plugin = plugin;
@@ -110,6 +116,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         BlockPlaceEvent.getHandlerList().unregister(this);
         EntityDamageEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
+        //noinspection deprecation
         PlayerPickupItemEvent.getHandlerList().unregister(this);
         PlayerInteractEvent.getHandlerList().unregister(this);
         PlayerMoveEvent.getHandlerList().unregister(this);
@@ -123,10 +130,24 @@ public class GameArena extends BukkitRunnable implements Listener {
      * @param player The player to add to the arena.
      */
     private void addArenaPlayer(Player player) {
-            ColorLogger.INFO.printLog(showDebug, "GameArena - addArenaPlayer()");
+        ColorLogger.INFO.printLog(showDebug, "GameArena - addArenaPlayer()");
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
         TeamSpawnLocations teamLocations = teamSpawnLocations.get(playerMinigameData.getSelectedTeam().getIndex());
         int lastTeamSpawnIndex = teamLocations.getLastTeamSpawnIndex();
+
+        // Backup player inventory
+        if (!playerMinigameData.isInventoryBackedUp()) {
+            ColorLogger.WARNING.printLog("Saved ArenaPlayer " + player.getDisplayName() + " Added! - addArenaPlayer()");
+            playerMinigameData.backupInventoryContents();
+            playerMinigameData.setInventoryBackedUp(true);
+        }
+
+        // Clear the inventory
+        player.getInventory().clear();
+        player.getInventory().setHelmet(null);
+        player.getInventory().setChestplate(null);
+        player.getInventory().setLeggings(null);
+        player.getInventory().setBoots(null);
 
         // Teleport player
         Location location = teamLocations.getLocations().get(lastTeamSpawnIndex);
@@ -146,7 +167,7 @@ public class GameArena extends BukkitRunnable implements Listener {
      *
      * @param player The player to remove.
      */
-    public void removeArenaPlayer(Player player) {
+    public void removeArenaPlayer(Player player, boolean restoreInventory) {
         ColorLogger.INFO.printLog(showDebug, "GameArena - removeArenaPlayer()");
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
         playerMinigameData.setSelectedTeam(null);
@@ -164,6 +185,15 @@ public class GameArena extends BukkitRunnable implements Listener {
         player.getInventory().setChestplate(null);
         player.getInventory().setLeggings(null);
         player.getInventory().setBoots(null);
+
+        // Restore player inventory
+        if (playerMinigameData.isInventoryBackedUp() && restoreInventory) {
+            ColorLogger.WARNING.printLog("Restored arenaPlayer " + player.getDisplayName() + " inventory! - removeArenaPlayer()");
+            playerMinigameData.restoreInventoryContents();
+            playerMinigameData.setInventoryBackedUp(false);
+        } else {
+            ColorLogger.WARNING.printLog("Removing Arena player. Not backing up inventory! (moving to spectator?)");
+        }
     }
 
     /**
@@ -182,12 +212,28 @@ public class GameArena extends BukkitRunnable implements Listener {
      *
      * @param spectator The spectator to add.
      */
-    public void addSpectator(Player spectator) {
+    public void addSpectator(Player spectator, boolean backupInventory) {
         ColorLogger.INFO.printLog(showDebug, "GameArena - addSpectator()");
-        // TODO: Give the spectator the spectator menu
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(spectator);
 
         // Set player as spectator in their profile.
-        gameManager.getPlayerManager().getPlayerProfileData(spectator).setSpectator(true);
+        playerMinigameData.setSpectator(true);
+
+        // Backup player inventory
+        if (!playerMinigameData.isInventoryBackedUp() && backupInventory) {
+            ColorLogger.WARNING.printLog("Saved " + spectator.getDisplayName() + " inventory! - addSpectator()");
+            playerMinigameData.backupInventoryContents();
+            playerMinigameData.setInventoryBackedUp(true);
+        } else {
+            ColorLogger.WARNING.printLog("Spectator " + spectator.getDisplayName() + " Added! - Inventory backup already exists!");
+        }
+
+        // Clear the inventory
+        spectator.getInventory().clear();
+        spectator.getInventory().setHelmet(null);
+        spectator.getInventory().setChestplate(null);
+        spectator.getInventory().setLeggings(null);
+        spectator.getInventory().setBoots(null);
 
         // Show the spectator a boss bar.
         spectatorBar.showBossBar(spectator);
@@ -217,10 +263,10 @@ public class GameArena extends BukkitRunnable implements Listener {
         // Hide spectators
         hideSpectators();
 
-        //Give Spectator tracker menu item.
-        ItemStack spectatorServerExit = new ItemBuilder(Material.WATCH).setTitle(ChatColor.GREEN + "" +
-                ChatColor.BOLD + "Back To Lobby").build(true);
+        //Give Spectator tracker menu items.
         spectator.getInventory().setItem(0, spectatorServerExit);
+        spectator.getInventory().setItem(1, trackPlayers);
+        spectator.getInventory().setItem(2, flySpeed);
     }
 
     /**
@@ -230,7 +276,6 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     public void removeSpectator(Player spectator) {
         ColorLogger.INFO.printLog(showDebug, "GameArena - removeSpectator()");
-        // TODO: Remove the spectator menu
 
         PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(spectator);
         playerMinigameData.setSelectedTeam(null);
@@ -260,6 +305,13 @@ public class GameArena extends BukkitRunnable implements Listener {
         // Remove spectator invisible potion effect
         for (PotionEffect potionEffect : spectator.getActivePotionEffects()) {
             spectator.removePotionEffect(potionEffect.getType());
+        }
+
+        // Restore player inventory
+        if (playerMinigameData.isInventoryBackedUp()) {
+            ColorLogger.WARNING.printLog("Restored spectator " + spectator.getDisplayName() + " inventory! - removeSpectator()");
+            playerMinigameData.restoreInventoryContents();
+            playerMinigameData.setInventoryBackedUp(false);
         }
 
         showHiddenPlayers();
@@ -479,7 +531,7 @@ public class GameArena extends BukkitRunnable implements Listener {
                 sortedPlayers.add(player);
             }
 
-            System.out.println(sortedPlayers);
+            ColorLogger.DEBUG.printLog(showDebug, sortedPlayers.toString());
 
             //Show the game rules only once
             Bukkit.broadcastMessage("");
@@ -566,22 +618,17 @@ public class GameArena extends BukkitRunnable implements Listener {
     /**
      * Helper method to remove all arena players.
      */
-    void removeAllArenaPlayers() {
-        ColorLogger.INFO.printLog(showDebug, "GameArena - removeAllArenaPlayers()");
+    void removePlayersFromArena() {
+        ColorLogger.INFO.printLog(showDebug, "GameArena - removePlayersFromArena()");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
-            removeArenaPlayer(player);
-        }
-    }
 
-    /**
-     * Helper method to remove all spectator players.
-     */
-    void removeAllArenaSpectators() {
-        ColorLogger.INFO.printLog(showDebug, "GameArena - removeAllArenaSpectators()");
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasMetadata("NPC")) return;
-            removeSpectator(player);
+            // Remove players correctly
+            if (!playerManager.getPlayerProfileData(player).isSpectator()) {
+                removeArenaPlayer(player, true);
+            } else {
+                removeSpectator(player);
+            }
         }
     }
 
@@ -649,8 +696,8 @@ public class GameArena extends BukkitRunnable implements Listener {
             public void run() {
 
                 if (!playerManager.getPlayerProfileData(player).isSpectator()) {
-                    removeArenaPlayer(player);
-                    addSpectator(player);
+                    removeArenaPlayer(player, false);
+                    addSpectator(player, false);
                 }
 
                 teleportSpectator(player);
@@ -671,7 +718,7 @@ public class GameArena extends BukkitRunnable implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerPickupItem(PlayerPickupItemEvent event) {
+    public void onPlayerPickupItem(@SuppressWarnings("deprecation") PlayerPickupItemEvent event) {
         event.setCancelled(true);
     }
 
@@ -680,7 +727,35 @@ public class GameArena extends BukkitRunnable implements Listener {
      */
     @EventHandler(priority = EventPriority.LOW)
     public void onSpectatorInteract(PlayerInteractEvent event) {
-        if (!playerManager.getPlayerProfileData(event.getPlayer()).isSpectator()) return;
+        Player player = event.getPlayer();
+        if (!playerManager.getPlayerProfileData(player).isSpectator()) return;
+
+        // Test for spectator Item clicks
+        if (event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK) ||
+                event.getAction().equals(Action.LEFT_CLICK_AIR) || event.getAction().equals(Action.LEFT_CLICK_BLOCK)) {
+            if (event.getItem() == null) return;
+            Material material = event.getItem().getType();
+
+            ColorLogger.DEBUG.printLog("Spectator Item Clicked");
+
+            if (material == spectatorServerExit.getType()) {
+                removeSpectator(player);
+                plugin.getSpigotCore().getBungeecord().connectToBungeeServer(player, "hub-01");
+                ColorLogger.INFO.printLog("Spectator watch clicked!! " + player.getDisplayName() + " leaving game!!");
+                ColorLogger.DEBUG.printLog("spectatorServerExit");
+            }
+
+            if (material == trackPlayers.getType()) {
+                new SpectatorPlayerTracker(plugin).open(player);
+                ColorLogger.DEBUG.printLog("trackPlayers");
+            }
+
+            if (material == flySpeed.getType()) {
+                new SpectatorFlySpeed(plugin).open(player);
+                ColorLogger.DEBUG.printLog("flySpeed");
+            }
+        }
+
         event.setCancelled(true);
     }
 

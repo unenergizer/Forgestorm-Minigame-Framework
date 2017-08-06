@@ -1,6 +1,5 @@
 package com.forgestorm.mgf;
 
-import com.forgestorm.mgf.bungeecord.BungeeCord;
 import com.forgestorm.mgf.commands.Admin;
 import com.forgestorm.mgf.commands.Lobby;
 import com.forgestorm.mgf.core.GameManager;
@@ -36,14 +35,12 @@ public class MinigameFramework extends JavaPlugin {
     private TitleManagerAPI titleManagerAPI = (TitleManagerAPI) Bukkit.getServer().getPluginManager().getPlugin("TitleManager");
     private SpigotCore spigotCore = (SpigotCore) Bukkit.getServer().getPluginManager().getPlugin("FS-SpigotCore");
     private GameManager gameManager;
-    private BungeeCord bungeecord;
 
     @Override
     public void onEnable() {
         // Begin Game Framework Load
         gameManager = new GameManager(this);
         gameManager.runTaskTimer(this, 0, 20);
-        bungeecord = new BungeeCord(this);
 
         registerCommands();
     }
@@ -52,7 +49,6 @@ public class MinigameFramework extends JavaPlugin {
     public void onDisable() {
         // Disable the core manager
         gameManager.onDisable();
-        bungeecord.onDisable();
     }
 
     private void registerCommands() {

@@ -2,6 +2,7 @@ package com.forgestorm.mgf.core.score;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 
@@ -165,7 +166,7 @@ public class ScoreManager {
      */
     public void updateDatabase() {
         playerStats.forEach((player, stats) -> {
-            stats.forEach((statType, amount) -> System.out.println(player.getName() + " : " + statType + "=" + amount));
+            stats.forEach((statType, amount) -> ColorLogger.DEBUG.printLog(player.getName() + " : " + statType + "=" + amount));
         });
     }
 

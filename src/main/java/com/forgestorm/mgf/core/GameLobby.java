@@ -167,11 +167,6 @@ public class GameLobby extends BukkitRunnable implements Listener {
         // Do teleport fix!
         teleportFix2.fixTeleport(player);
 
-        // Restore player inventory
-        if (playerMinigameData.getArmorContents() != null || playerMinigameData.getInventoryContents() != null) {
-            playerMinigameData.restoreInventoryContents();
-        }
-
         // Add the scoreboard if the players profile has been loaded in SpigotCore plugin.
         if (plugin.getSpigotCore().getProfileManager().getProfile(player) != null) tarkanLobbyScoreboard.addPlayer(player);
     }
@@ -183,7 +178,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
      *
      * @param player The player we will remove.
      */
-    public void removePlayer(Player player, boolean playerQuit) {
+    public void removePlayer(Player player) {
         ColorLogger.INFO.printLog(showDebug, "GameLobby - removePlayer()");
         // Remove the scoreboard.
         tarkanLobbyScoreboard.removePlayer(player);
@@ -193,19 +188,6 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         // Remove player double jump.
         doubleJump.removePlayer(player);
-
-        // Don't do the rest if the player is quitting.
-        if (playerQuit) return;
-
-        // Backup player inventory
-        gameManager.getPlayerManager().getPlayerProfileData(player).backupInventoryContents();
-
-        // Clear the inventory
-        player.getInventory().clear();
-        player.getInventory().setHelmet(null);
-        player.getInventory().setChestplate(null);
-        player.getInventory().setLeggings(null);
-        player.getInventory().setBoots(null);
     }
 
     /**
@@ -306,7 +288,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
         ColorLogger.INFO.printLog(showDebug, "GameLobby - removeAllPlayers()");
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
-            removePlayer(player, false);
+            removePlayer(player);
         }
     }
 

@@ -5,6 +5,7 @@ import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.GameArena;
 import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.spigotcore.database.ProfileLoadedEvent;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -121,7 +122,7 @@ public class PlayerManager implements Listener {
 
             // Remove from the core lobby.
             GameLobby gameLobby = gameManager.getGameLobby();
-            gameLobby.removePlayer(player, true);
+            gameLobby.removePlayer(player);
             gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size() - 1);
             gameLobby.getTeamManager().playerQuit(player);
 
@@ -162,7 +163,7 @@ public class PlayerManager implements Listener {
                 ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Arena Player Quit");
 
                 // Remove the player from the arena.
-                gameArena.removeArenaPlayer(player);
+                gameArena.removeArenaPlayer(player, true);
 
                 // Remove profile and save data.
                 removeProfileData(player);
@@ -225,17 +226,28 @@ public class PlayerManager implements Listener {
 
             // Show the join message.
             event.setJoinMessage(joinMessage);
-
-            // Setup spectator player
-            // Run on the next tick to prevent teleport bug.
-
-            System.out.println("Doing spectator specific code! :)");
-
-            PlayerMinigameData playerMinigameData = getPlayerProfileData(player);
-            playerMinigameData.backupInventoryContents();
-            gameManager.getGameArena().addSpectator(player);
-            gameManager.getGameArena().teleportSpectator(player);
         }
+    }
+
+    /**
+     * This event was added because when a player would join the server late as a spectator
+     * their was a bug that would add their inventory late. Thus overwriting the spectator
+     * menu items. Then when a minigame was over, the players original inventory was
+     * completely wiped.
+     */
+    @EventHandler
+    public void onProfileLoad(ProfileLoadedEvent event) {
+        if (gameManager.isInLobby()) return; // Specific setup for spectators only.
+        Player player = event.getPlayer();
+
+        ColorLogger.DEBUG.printLog("Doing spectator specific setup code! :)");
+
+        // Setup spectator player
+        // Run on the next tick to prevent teleport bug.
+        PlayerMinigameData playerMinigameData = getPlayerProfileData(player);
+        playerMinigameData.backupInventoryContents();
+        gameManager.getGameArena().addSpectator(player, true);
+        gameManager.getGameArena().teleportSpectator(player);
     }
 
     /**
