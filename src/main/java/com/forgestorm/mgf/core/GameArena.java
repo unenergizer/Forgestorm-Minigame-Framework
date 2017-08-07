@@ -460,7 +460,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         String timeLeft = Integer.toString(countdown);
 
         // Test if the game should end.
-        if (shouldMinigameEnd()) {
+        if (shouldMinigameEnd(null)) {
             cancel();
             gameManager.endGame(true);
 
@@ -639,11 +639,12 @@ public class GameArena extends BukkitRunnable implements Listener {
      * that when we run this check we are filtering
      * out spectator players.
      */
-    private boolean shouldMinigameEnd() {
+    private boolean shouldMinigameEnd(Player exitPlayer) {
         int minigamePlayers = 0;
         boolean shouldEnd = false;
 
         for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player == exitPlayer) continue;
             PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
             if (playerMinigameData == null || playerMinigameData.isSpectator()) continue;
             minigamePlayers++;
@@ -792,12 +793,12 @@ public class GameArena extends BukkitRunnable implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerKick(PlayerKickEvent event) {
-        if (shouldMinigameEnd()) minigame.endMinigame();
+        if (shouldMinigameEnd(event.getPlayer())) minigame.endMinigame();
     }
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        if (shouldMinigameEnd()) minigame.endMinigame();
+        if (shouldMinigameEnd(event.getPlayer())) minigame.endMinigame();
     }
 
     /**
