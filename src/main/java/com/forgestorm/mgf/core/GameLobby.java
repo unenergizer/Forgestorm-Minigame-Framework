@@ -11,6 +11,7 @@ import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.mgf.util.display.TipAnnouncer;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
 import com.forgestorm.spigotcore.player.DoubleJump;
+import com.forgestorm.spigotcore.professions.ProfessionToggle;
 import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.Getter;
@@ -73,6 +74,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
     @Setter
     private int countdown = maxCountdown;
     private TeleportFix2 teleportFix2 = new TeleportFix2();
+    private ProfessionToggle professionToggle;
 
     GameLobby(MinigameFramework plugin, GameManager gameManager, Minigame minigame) {
         this.plugin = plugin;
@@ -80,6 +82,7 @@ public class GameLobby extends BukkitRunnable implements Listener {
         this.minigame = minigame;
         tarkanLobbyScoreboard = new TarkanLobbyScoreboard(plugin, gameManager, this);
         doubleJump = new DoubleJump(plugin.getSpigotCore());
+        professionToggle = new ProfessionToggle(plugin.getSpigotCore());
     }
 
     /**
@@ -102,6 +105,9 @@ public class GameLobby extends BukkitRunnable implements Listener {
         // Register Listeners
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
+        // Enable Professions
+        professionToggle.enableProfessions();
+
         // Set weather
         World world = Bukkit.getWorlds().get(0);
         world.setStorm(false);
@@ -123,6 +129,10 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         // Stop core play tips.
         tipAnnouncer.setShowTips(false);
+
+        // Test Profession Implementation
+        professionToggle.disableProfessions();
+        ColorLogger.INFO.printLog(Boolean.toString(professionToggle.isProfessionsEnabled()));
 
         // Unregister stat listeners
         EntityCombustEvent.getHandlerList().unregister(this);
