@@ -1,6 +1,6 @@
 package com.forgestorm.mgf.constants;
 
-import org.bukkit.ChatColor;
+import com.forgestorm.spigotcore.util.text.ColorMessage;
 
 /*********************************************************************************
  *
@@ -91,7 +91,7 @@ public enum MinigameMessages {
 	
 	//Constructor
 	MinigameMessages(String message) {
-		this.message = color(message);
+		this.message = ColorMessage.color(message);
 	}
 	
 	/**
@@ -100,15 +100,4 @@ public enum MinigameMessages {
 	public String toString() {
 		return message;
 	}
-	
-	/**
-	 * Converts special characters in text into Minecraft client color codes.
-	 * <p>
-	 * This will give the messages color.
-	 * @param msg The message that needs to have its color codes converted.
-	 * @return Returns a colored message!
-	 */
-	public static String color(String msg) {
-        return ChatColor.translateAlternateColorCodes('&', msg);
-    }
 }

@@ -21,7 +21,6 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -47,7 +46,7 @@ import java.util.Random;
  */
 
 @SuppressWarnings("unused")
-public class SheerSheep extends Minigame implements Listener {
+public class SheerSheep extends Minigame {
 
     private final SpawnSheep spawnSheep;
     private final int maxScore = 80;
@@ -102,11 +101,6 @@ public class SheerSheep extends Minigame implements Listener {
 
     @Override
     public List<Team> getTeams() {
-        List<String> description = new ArrayList<>();
-        description.add("Every player from themselves!!");
-        description.add("Compete to be the best!");
-
-
         List<Team> team = new ArrayList<>();
         team.add(new Team(
                 0,
@@ -115,7 +109,7 @@ public class SheerSheep extends Minigame implements Listener {
                 -1,
                 EntityType.SHEEP,
                 Material.BOOKSHELF,
-                description));
+                new String[] {"Every player from themselves!!", "Compete to be the best!"}));
         return team;
     }
 

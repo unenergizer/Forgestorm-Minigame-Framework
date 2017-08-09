@@ -1,6 +1,7 @@
 package com.forgestorm.mgf.core.games;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.games.pirateattack.PirateAttack;
 import com.forgestorm.mgf.core.games.sheersheep.SheerSheep;
 import com.forgestorm.mgf.core.games.mowgrass.MowGrass;
 
@@ -25,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 @SuppressWarnings("unused")
 public enum GameType {
 
+    PIRATE_ATTACK(PirateAttack.class, "Pirate Attack"),
     SHEER_SHEEP(SheerSheep.class, "Sheer Sheep"),
     MOW_GRASS(MowGrass.class, "Mow Grass");
 

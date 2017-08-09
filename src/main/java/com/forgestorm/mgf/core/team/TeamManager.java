@@ -4,9 +4,10 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.constants.PedestalLocations;
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.util.world.PedestalMapping;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.mgf.util.world.PedestalMapping;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
+import com.forgestorm.spigotcore.constants.UserGroup;
 import com.forgestorm.spigotcore.util.display.Hologram;
 import com.forgestorm.spigotcore.util.text.CenterChatText;
 import lombok.Getter;
@@ -112,6 +113,7 @@ public class TeamManager implements Listener {
     public void destroyTeams() {
         // Remove entities
         for (Entity entity : teamEntities.keySet()) {
+            plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_TEAM.getTeamName()).removeEntry(entity.getUniqueId().toString());
             entity.remove();
         }
 
@@ -325,7 +327,7 @@ public class TeamManager implements Listener {
      */
     private void updateTeamJoinQueues() {
         for (Team team : teamsList) {
-            if (!team.getQueuedPlayers().isEmpty()) return;
+            if (team.getQueuedPlayers().isEmpty()) return;
 
             if (team.getTeamPlayers().size() < team.getTeamSizes()) {
 
@@ -428,6 +430,9 @@ public class TeamManager implements Listener {
 
         // Fix to make mobs face the correct direction.
         entity.teleport(entityLocation);
+
+        // Add the prefix to the team entity username.
+        plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_TEAM.getTeamName()).addEntry(entity.getUniqueId().toString());
 
         // Add the team selection entities UUID's to an array list.
         // This is used to keep track of which one is being clicked for team selection.

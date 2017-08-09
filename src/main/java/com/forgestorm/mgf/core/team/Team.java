@@ -42,5 +42,5 @@ public class Team {
     private int teamSizes;
     private EntityType teamEntityType;
     private Material teamPlatformMaterials;
-    private List<String> teamDescription;
+    private String[] teamDescription;
 }

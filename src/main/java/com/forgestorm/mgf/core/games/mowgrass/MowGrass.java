@@ -86,10 +86,6 @@ public class MowGrass extends Minigame {
 
     @Override
     public List<Team> getTeams() {
-        List<String> description = new ArrayList<>();
-        description.add("Cut the grass or your dad's going to be pissed...");
-        description.add("So mow that brush you dirty animal!");
-
         List<Team> team = new ArrayList<>();
         team.add(new Team(
                 0,
@@ -98,7 +94,7 @@ public class MowGrass extends Minigame {
                 -1,
                 EntityType.SHEEP,
                 Material.STONE,
-                description));
+                new String[] {"Cut the grass or your dad's going to be pissed...","So mow that brush you dirty animal!"}));
         return team;
     }
 

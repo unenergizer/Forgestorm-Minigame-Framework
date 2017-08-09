@@ -7,6 +7,7 @@ import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.mgf.util.world.PedestalMapping;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
+import com.forgestorm.spigotcore.constants.UserGroup;
 import com.forgestorm.spigotcore.util.text.CenterChatText;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -103,8 +104,10 @@ public class KitManager implements Listener {
      * Unregister stat listeners for this class
      */
     public void destroyKits() {
+
         // Remove entities
         for (Entity entity : kitEntities.keySet()) {
+            plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_KIT.getTeamName()).removeEntry(entity.getUniqueId().toString());
             entity.remove();
         }
 
@@ -191,6 +194,9 @@ public class KitManager implements Listener {
 
         // Fix to make mobs face the correct direction.
         entity.teleport(entityLocation);
+
+        // Add the prefix to the kit entity username.
+        plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_KIT.getTeamName()).addEntry(entity.getUniqueId().toString());
 
         // Add the kit selection entities UUID's to an array list.
         // This is used to keep track of which one is being clicked for kit selection.

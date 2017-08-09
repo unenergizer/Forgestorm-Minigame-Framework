@@ -4,6 +4,7 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -39,6 +40,8 @@ public class ScoreManager {
     private boolean winConditionMet = false;
     @Getter
     private Map<Player, Double> finalScore;
+    @Setter
+    private TestableWinCondition testableWinCondition;
 
     public ScoreManager(MinigameFramework plugin) {
         this.plugin = plugin;
@@ -94,6 +97,14 @@ public class ScoreManager {
 
         double playerPoints = playerStats.get(player).get(statType);
         double maxPoints = winConditions.get(statType);
+
+        if (testableWinCondition != null) {
+            if (testableWinCondition.hasWonCondition(statType, player)) {
+                winConditionMet  = true;
+                plugin.getGameManager().getCurrentMinigame().endMinigame();
+            }
+            return;
+        }
 
         if (playerPoints >= maxPoints && !winConditionMet) {
             winConditionMet = true;
@@ -165,9 +176,9 @@ public class ScoreManager {
      * TODO: Actually update the database with the new stat points.
      */
     public void updateDatabase() {
-        playerStats.forEach((player, stats) -> {
-            stats.forEach((statType, amount) -> ColorLogger.DEBUG.printLog(player.getName() + " : " + statType + "=" + amount));
-        });
+        playerStats.forEach((player, stats) ->
+            stats.forEach((statType, amount) -> ColorLogger.DEBUG.printLog(player.getName() + " : " + statType + "=" + amount))
+        );
     }
 
     /**
