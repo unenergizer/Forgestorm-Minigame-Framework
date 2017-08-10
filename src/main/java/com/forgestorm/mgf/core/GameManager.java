@@ -84,10 +84,9 @@ public class GameManager extends BukkitRunnable {
 
         // Basic game selection based on array list index.
         currentGameIndex++;
-        if (currentGameIndex > totalGames) {
-            // Go back to first game.
-            currentGameIndex = 0;
-        }
+
+        // Go back to first game if needed.
+        if (currentGameIndex > totalGames) currentGameIndex = 0;
 
         // Grab game selected.
         currentMinigameType = GameType.valueOf(plugin.getConfigGameList().get(currentGameIndex));
@@ -165,8 +164,7 @@ public class GameManager extends BukkitRunnable {
                 .filter(player -> !playerManager.getPlayerProfileData(player).isSpectator())
                 .collect(Collectors.toList());
 
-        scoreManager.initStats(players, currentMinigame.getScoreData());
-        scoreManager.initWinConditions(currentMinigame.getScoreData());
+        scoreManager.initStats(players, currentMinigame.getStatTypes());
     }
 
     /**
@@ -202,9 +200,7 @@ public class GameManager extends BukkitRunnable {
         // Determines if a new game should start.
         // Typically if the server is shutting down or
         // reloading a new game will not be started.
-        if (startNewGame) {
-            selectGame();
-        }
+        if (startNewGame) selectGame();
     }
 
     /**
@@ -234,12 +230,8 @@ public class GameManager extends BukkitRunnable {
      *
      * @param worldName The name of the world to clear entities in.
      */
-    private void clearWorldEntities(String worldName) {
-        ColorLogger.INFO.printLog(showDebug, "GameManager - clearWorldEntities()");
-        for (Entity entity : Bukkit.getWorld(worldName).getEntities()) {
-            if (entity instanceof Player) return;
-            entity.remove();
-        }
+    public void clearWorldEntities(String worldName) {
+        for (Entity entity : Bukkit.getWorld(worldName).getEntities()) if (!(entity instanceof Player)) entity.remove();
     }
 
     /**

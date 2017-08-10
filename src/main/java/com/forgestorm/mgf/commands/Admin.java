@@ -1,8 +1,8 @@
 package com.forgestorm.mgf.commands;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.constants.ArenaState;
 import com.forgestorm.mgf.constants.MinigameMessages;
-import com.forgestorm.mgf.core.GameArena;
 import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.spigotcore.constants.CommonSounds;
@@ -103,9 +103,9 @@ public class Admin implements CommandExecutor {
                     Bukkit.broadcastMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_START.toString());
                     break;
                 case "stop":
-                    GameArena.ArenaState arenaState = gameManager.getGameArena().getArenaState();
+                    ArenaState arenaState = gameManager.getGameArena().getArenaState();
 
-                    if (arenaState == GameArena.ArenaState.ARENA_EXIT || arenaState == GameArena.ArenaState.ARENA_SHOW_SCORES) {
+                    if (arenaState == ArenaState.ARENA_EXIT || arenaState == ArenaState.ARENA_SHOW_SCORES) {
                         commandSender.sendMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_STOP_ERROR_01.toString());
                         return false;
                     }

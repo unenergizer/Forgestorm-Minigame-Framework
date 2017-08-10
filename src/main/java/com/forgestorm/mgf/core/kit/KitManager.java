@@ -48,7 +48,7 @@ public class KitManager implements Listener {
     private final PlatformBuilder platformBuilder;
     private final List<Kit> kitsList;
     private final GameManager gameManager;
-    private final Map<Entity, Kit> kitEntities = new HashMap<>();
+    private final Map<LivingEntity, Kit> kitEntities = new HashMap<>();
     private final World lobbyWorld;
     private final List<PedestalLocations> pedestalLocations = new ArrayList<>();
 
@@ -106,8 +106,8 @@ public class KitManager implements Listener {
     public void destroyKits() {
 
         // Remove entities
-        for (Entity entity : kitEntities.keySet()) {
-            plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_KIT.getTeamName()).removeEntry(entity.getUniqueId().toString());
+        for (LivingEntity entity : kitEntities.keySet()) {
+            plugin.getSpigotCore().getScoreboardManager().removeEntityFromTeam(entity, UserGroup.MINIGAME_KIT.getTeamName());
             entity.remove();
         }
 
@@ -196,7 +196,7 @@ public class KitManager implements Listener {
         entity.teleport(entityLocation);
 
         // Add the prefix to the kit entity username.
-        plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_KIT.getTeamName()).addEntry(entity.getUniqueId().toString());
+        plugin.getSpigotCore().getScoreboardManager().addEntityToTeam(entity, UserGroup.MINIGAME_KIT.getTeamName());
 
         // Add the kit selection entities UUID's to an array list.
         // This is used to keep track of which one is being clicked for kit selection.

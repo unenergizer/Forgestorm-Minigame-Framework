@@ -5,7 +5,6 @@ import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.sheersheep.kits.ExplosiveShears;
 import com.forgestorm.mgf.core.games.sheersheep.kits.KnifeParty;
 import com.forgestorm.mgf.core.kit.Kit;
-import com.forgestorm.mgf.core.score.ScoreData;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
 import com.forgestorm.mgf.core.team.Team;
@@ -114,10 +113,9 @@ public class SheerSheep extends Minigame {
     }
 
     @Override
-    public List<ScoreData> getScoreData() {
-        List<ScoreData> statTypes = new ArrayList<>();
-        statTypes.add(new ScoreData(mainStatType, true, 80.0));
-        statTypes.add(new ScoreData(StatType.FIRST_KILL, false, null));
+    public List<StatType> getStatTypes() {
+        List<StatType> statTypes = new ArrayList<>();
+        statTypes.add(StatType.PICKUP_ITEM);
         return statTypes;
     }
 

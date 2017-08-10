@@ -4,7 +4,6 @@ import com.forgestorm.mgf.MinigameFramework;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
-import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Queue;
@@ -43,9 +42,7 @@ public class WorldManager extends BukkitRunnable {
      * @return True if the world is loaded, false otherwise.
      */
     public boolean isWorldLoaded(WorldData worldData) {
-        for (World world : Bukkit.getWorlds()) {
-            if (world.getName().equals(worldData.getWorldName())) return true;
-        }
+        for (World world : Bukkit.getWorlds()) if (world.getName().equals(worldData.getWorldName())) return true;
         return false;
     }
 
@@ -84,19 +81,13 @@ public class WorldManager extends BukkitRunnable {
      * Async world loading is NOT supported with the Spigot API.
      */
     private void syncWorldLoad() {
-        if (!worldLoadQueue.isEmpty()) {
-            String worldName = worldLoadQueue.remove();
+        if (worldLoadQueue.isEmpty()) return;
+        String worldName = worldLoadQueue.remove();
 
-            WorldCreator worldCreator = new WorldCreator(worldName);
-            worldCreator.createWorld();
+        WorldCreator worldCreator = new WorldCreator(worldName);
+        worldCreator.createWorld();
 
-            Bukkit.getWorld(worldName);
-
-            // Remove entities
-            for (Entity entity : Bukkit.getWorld(worldName).getEntities()) {
-                entity.remove();
-            }
-        }
+        Bukkit.getWorld(worldName);
     }
 
     /**
@@ -106,15 +97,14 @@ public class WorldManager extends BukkitRunnable {
      * from a backup.
      */
     private void syncWorldUnload() {
-        if (!worldUnloadQueue.isEmpty()) {
-            String worldName = worldUnloadQueue.remove();
+        if (worldUnloadQueue.isEmpty()) return;
+        String worldName = worldUnloadQueue.remove();
 
-            // Unload the world
-            Bukkit.unloadWorld(worldName, false);
+        // Unload the world
+        Bukkit.unloadWorld(worldName, false);
 
-            // Prepare the directory for deletion.
-            asyncFileManager.addWorldToDelete(worldName);
-        }
+        // Prepare the directory for deletion.
+        asyncFileManager.addWorldToDelete(worldName);
     }
 
     /**

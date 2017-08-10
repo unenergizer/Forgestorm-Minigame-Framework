@@ -3,16 +3,12 @@ package com.forgestorm.mgf.core.score;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
-import lombok.Getter;
-import lombok.Setter;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /*********************************************************************************
  *
@@ -36,12 +32,6 @@ public class ScoreManager {
 
     private final Map<Player, Map<StatType, Double>> playerStats = new HashMap<>();
     private final List<StatListener> statListeners = new ArrayList<>();
-    private final Map<StatType, Double> winConditions = new HashMap<>();
-    private boolean winConditionMet = false;
-    @Getter
-    private Map<Player, Double> finalScore;
-    @Setter
-    private TestableWinCondition testableWinCondition;
 
     public ScoreManager(MinigameFramework plugin) {
         this.plugin = plugin;
@@ -50,92 +40,20 @@ public class ScoreManager {
     /**
      * Register all stats that the game will listen to during the game play.
      *
-     * @param players   A list of players.
-     * @param scoreData A list of data that contains StatTypes to listen to.
+     * @param players  A list of players.
+     * @param statType A list of StatTypes to listen to.
      */
-    public void initStats(List<Player> players, List<ScoreData> scoreData) {
+    public void initStats(List<Player> players, List<StatType> statType) {
         // For each player register a statType and default value
         for (Player player : players) {
             Map<StatType, Double> statsForPlayer = new HashMap<>();
-            for (ScoreData data : scoreData) {
-                statsForPlayer.put(data.getStatType(), 0.0);
-            }
             playerStats.put(player, statsForPlayer);
         }
 
         // Save stat stat listeners
-        for (ScoreData data : scoreData) {
-            statListeners.add(data.getStatType().registerListener(plugin));
+        for (StatType stat : statType) {
+            statListeners.add(stat.registerListener(plugin));
         }
-    }
-
-    /**
-     * This will add a win condition to the score manager.  Win
-     * conditions determine when a game should end.
-     * <p>
-     * StatType = The stat we want to listen to for a win.
-     * Integer = The max points needed for the win.
-     *
-     * @param scoreData A data class that contains win conditions for the given game.
-     */
-    public void initWinConditions(List<ScoreData> scoreData) {
-        for (ScoreData data : scoreData) {
-            if (!data.isWinCondition()) return;
-            winConditions.put(data.getStatType(), data.getMaxWinScore());
-        }
-    }
-
-    /**
-     * This will check to see if a win condition has been met.
-     *
-     * @param statType The stat to check.
-     * @param player   The player who we will check scores for.
-     */
-    private void checkWinConditions(StatType statType, Player player) {
-        if (!winConditions.containsKey(statType)) return;
-        if (winConditionMet) return;
-
-        double playerPoints = playerStats.get(player).get(statType);
-        double maxPoints = winConditions.get(statType);
-
-        if (testableWinCondition != null) {
-            if (testableWinCondition.hasWonCondition(statType, player)) {
-                winConditionMet  = true;
-                plugin.getGameManager().getCurrentMinigame().endMinigame();
-            }
-            return;
-        }
-
-        if (playerPoints >= maxPoints && !winConditionMet) {
-            winConditionMet = true;
-
-            // Generate the top scores for display.
-            finalScore = generateTopScores(statType);
-
-            // Point threshold has been met. Lets end the current game.
-            plugin.getGameManager().getCurrentMinigame().endMinigame();
-        }
-    }
-
-    /**
-     * Generate a list of the top performing players for end game scores.
-     *
-     * @param statType The stat type used to reach a end game win condition.
-     */
-    public Map<Player, Double> generateTopScores(StatType statType) {
-        // Build easy map for score sorting.
-        Map<Player, Double> unsortedScores = new HashMap<>();
-
-        for (Player player : playerStats.keySet()) {
-            unsortedScores.put(player, playerStats.get(player).get(statType));
-        }
-
-        // Sort the players scores.
-        MyComparator comparator = new MyComparator(unsortedScores);
-        Map<Player, Double> scores = new TreeMap<>(comparator);
-        scores.putAll(unsortedScores);
-
-        return scores;
     }
 
     /**
@@ -160,8 +78,6 @@ public class ScoreManager {
         Map<StatType, Double> stats = playerStats.get(player);
         stats.replace(statType, stats.get(statType) + amount);
         playerStats.replace(player, stats);
-
-        checkWinConditions(statType, player);
     }
 
     /**
@@ -177,34 +93,7 @@ public class ScoreManager {
      */
     public void updateDatabase() {
         playerStats.forEach((player, stats) ->
-            stats.forEach((statType, amount) -> ColorLogger.DEBUG.printLog(player.getName() + " : " + statType + "=" + amount))
+                stats.forEach((statType, amount) -> ColorLogger.DEBUG.printLog(player.getName() + " : " + statType + "=" + amount))
         );
-    }
-
-    /**
-     * Code by: Sujan Reddy A
-     * Date: Feb 10 '13 at 6:10
-     * Source: https://stackoverflow.com/a/14795215/2865125
-     *
-     * Modified by: Robert Brown
-     * Date Added: 7/28/2017
-     */
-    class MyComparator implements Comparator<Object> {
-
-        Map<Player, Double> map;
-
-        MyComparator(Map<Player, Double> map) {
-            this.map = map;
-        }
-
-        @SuppressWarnings({"SuspiciousMethodCalls", "NumberEquality"})
-        public int compare(Object o1, Object o2) {
-
-            if (map.get(o2) == map.get(o1)) {
-                return 1;
-            } else {
-                return (map.get(o2)).compareTo(map.get(o1));
-            }
-        }
     }
 }

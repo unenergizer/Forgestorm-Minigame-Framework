@@ -73,10 +73,12 @@ public class ArenaPointsCounter extends BukkitRunnable {
             return;
         }
 
+        // TODO: IMPLEMENT NON LOOP BASED SCOREBOARD UPDATES!!
+
         // Update scoreboard data
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            setBoardData(player, plugin.getGameManager().getScoreManager().generateTopScores(statType));
-        }
+//        for (Player player : Bukkit.getOnlinePlayers()) {
+//            setBoardData(player, plugin.getGameManager().getScoreManager().generateTopScores(statType));
+//        }
     }
 
     /**

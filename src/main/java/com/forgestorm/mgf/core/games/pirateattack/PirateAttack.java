@@ -4,10 +4,11 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.pirateattack.kits.Pirate;
 import com.forgestorm.mgf.core.kit.Kit;
-import com.forgestorm.mgf.core.score.ScoreData;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.core.winmanagement.winevents.LastTeamStandingWinEvent;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -16,7 +17,13 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntityDamageByBlockEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +47,8 @@ import java.util.List;
 public class PirateAttack extends Minigame {
 
     private PirateAmmoSpawn pirateAmmoSpawn;
+    private List<Team> teams = new ArrayList<>();
+    private List<Team> teamsThatDied = new ArrayList<>();
 
     public PirateAttack(MinigameFramework plugin) {
         super(plugin);
@@ -47,23 +56,19 @@ public class PirateAttack extends Minigame {
 
     @Override
     public void setupGame() {
+        cancelPVE = false;
         pirateAmmoSpawn = new PirateAmmoSpawn(plugin);
         pirateAmmoSpawn.runTaskTimer(plugin, 0, 20 * 3);
-
-        plugin.getGameManager().getScoreManager().setTestableWinCondition(
-                (statType, player) -> {
-
-
-                    return false;
-                }
-        );
-
     }
 
     @Override
     public void disableGame() {
         pirateAmmoSpawn.cancel();
         ProjectileHitEvent.getHandlerList().unregister(this);
+        EntityDamageEvent.getHandlerList().unregister(this);
+        EntityDamageByEntityEvent.getHandlerList().unregister(this);
+        PlayerMoveEvent.getHandlerList().unregister(this);
+        EntityRegainHealthEvent.getHandlerList().unregister(this);
     }
 
     @Override
@@ -96,7 +101,6 @@ public class PirateAttack extends Minigame {
 
     @Override
     public List<Team> getTeams() {
-        List<Team> teams = new ArrayList<>();
         teams.add(new Team(
                 0,
                 "Blue Team",
@@ -117,9 +121,9 @@ public class PirateAttack extends Minigame {
     }
 
     @Override
-    public List<ScoreData> getScoreData() {
-        List<ScoreData> scoreData = new ArrayList<>();
-        scoreData.add(new ScoreData(StatType.FIRST_KILL, true, 1.0));
+    public List<StatType> getStatTypes() {
+        List<StatType> scoreData = new ArrayList<>();
+        scoreData.add(StatType.FIRST_KILL);
         return scoreData;
     }
 
@@ -133,6 +137,9 @@ public class PirateAttack extends Minigame {
 
         if (playerMinigameData.isSpectator()) return;
 
+        // Prevent lobby world explosions....
+        if (Bukkit.getWorlds().get(0).getName().equals(projectile.getLocation().getWorld().getName())) return;
+
         if (playerMinigameData.getSelectedTeam().getIndex() == 0) {
             if (projectile.getLocation().getX() > 0) return;
             projectile.getWorld().createExplosion(projectile.getLocation(), 4);
@@ -141,6 +148,86 @@ public class PirateAttack extends Minigame {
         if (playerMinigameData.getSelectedTeam().getIndex() == 1) {
             if (projectile.getLocation().getX() < 0) return;
             projectile.getWorld().createExplosion(projectile.getLocation(), 4);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+        Player player = (Player) event.getEntity();
+
+        if (player.getHealth() - event.getDamage() <= 1) {
+            event.setCancelled(true);
+            removePlayerFromGame(player);
+
+            ColorLogger.INFO.printLog("EntityDamageEvent - removePlayerFromGame()");
+        }
+    }
+
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+        Player player = (Player) event.getEntity();
+
+        if (player.getHealth() - event.getDamage() <= 1) {
+            event.setCancelled(true);
+            removePlayerFromGame(player);
+
+            ColorLogger.INFO.printLog("onEntityDamage - removePlayerFromGame()");
+        }
+    }
+
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+
+        if (getPlayerMinigameData(player).isSpectator()) return;
+        if (!event.getTo().getBlock().isLiquid()) return;
+
+        double maxDamage = 2;
+
+        if (player.getHealth() - maxDamage <= 1) {
+            removePlayerFromGame(player);
+
+            ColorLogger.INFO.printLog("PlayerMoveEvent - removePlayerFromGame()");
+        } else {
+            player.damage(maxDamage);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityRegainHealth(EntityRegainHealthEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+        event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onEntityDamage(EntityDamageByBlockEvent event) {
+        if (!(event.getEntity() instanceof Player)) return;
+        Player player = (Player) event.getEntity();
+
+        if (player.getHealth() - event.getDamage() <= 1) {
+            event.setCancelled(true);
+            removePlayerFromGame(player);
+
+            ColorLogger.INFO.printLog("EntityDamageByBlockEvent - removePlayerFromGame()");
+        }
+    }
+
+    private void removePlayerFromGame(Player player) {
+        ColorLogger.FATAL.printLog("removePlayerFromGame");
+
+        // kill off the player
+        Team team = getPlayerMinigameData(player).getSelectedTeam();
+        killPlayer(player);
+
+        // Get team results
+        if (team.getDeadPlayers().size() == team.getTeamPlayers().size()) {
+            teamsThatDied.add(team);
+            teamsThatDied.add(team.getIndex() == 0 ? teams.get(1) : teams.get(0));
+            Bukkit.getPluginManager().callEvent(new LastTeamStandingWinEvent(teamsThatDied));
         }
     }
 }

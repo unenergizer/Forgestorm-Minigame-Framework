@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @AllArgsConstructor
 public class Team {
     private final List<Player> teamPlayers = new ArrayList<>();
+    private final List<Player> deadPlayers = new ArrayList<>();
     private final Queue<Player> queuedPlayers = new ConcurrentLinkedQueue<>();
 
     private int index; // Represents a team via a number.

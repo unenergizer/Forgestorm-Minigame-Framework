@@ -54,7 +54,7 @@ public class TeamManager implements Listener {
     private final GameManager gameManager;
     private final PlatformBuilder platformBuilder;
     private final List<Team> teamsList;
-    private final Map<Entity, Team> teamEntities = new HashMap<>();
+    private final Map<LivingEntity, Team> teamEntities = new HashMap<>();
     private final Map<Team, Hologram> teamHolograms = new HashMap<>();
     private final World lobbyWorld;
     private final List<PedestalLocations> pedestalLocations = new ArrayList<>();
@@ -112,8 +112,8 @@ public class TeamManager implements Listener {
      */
     public void destroyTeams() {
         // Remove entities
-        for (Entity entity : teamEntities.keySet()) {
-            plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_TEAM.getTeamName()).removeEntry(entity.getUniqueId().toString());
+        for (LivingEntity entity : teamEntities.keySet()) {
+            plugin.getSpigotCore().getScoreboardManager().removeEntityFromTeam(entity, UserGroup.MINIGAME_TEAM.getTeamName());
             entity.remove();
         }
 
@@ -432,7 +432,7 @@ public class TeamManager implements Listener {
         entity.teleport(entityLocation);
 
         // Add the prefix to the team entity username.
-        plugin.getSpigotCore().getScoreboardManager().getScoreboard().getTeam(UserGroup.MINIGAME_TEAM.getTeamName()).addEntry(entity.getUniqueId().toString());
+        plugin.getSpigotCore().getScoreboardManager().addEntityToTeam(entity, UserGroup.MINIGAME_TEAM.getTeamName());
 
         // Add the team selection entities UUID's to an array list.
         // This is used to keep track of which one is being clicked for team selection.

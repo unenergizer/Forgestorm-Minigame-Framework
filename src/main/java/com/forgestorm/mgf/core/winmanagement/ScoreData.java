@@ -1,4 +1,4 @@
-package com.forgestorm.mgf.core.score;
+package com.forgestorm.mgf.core.winmanagement;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,7 +21,5 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class ScoreData {
-    private final StatType statType;
-    private final boolean isWinCondition;
-    private final Double maxWinScore;
+
 }

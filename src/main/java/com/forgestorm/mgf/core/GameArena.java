@@ -1,11 +1,14 @@
 package com.forgestorm.mgf.core;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.constants.ArenaState;
 import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.games.GameType;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.menus.SpectatorFlySpeed;
 import com.forgestorm.mgf.core.menus.SpectatorPlayerTracker;
+import com.forgestorm.mgf.core.team.TeamSpawnLocations;
+import com.forgestorm.mgf.core.winmanagement.WinManager;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
@@ -16,7 +19,6 @@ import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import com.forgestorm.spigotcore.util.text.CenterChatText;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -49,7 +51,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /*********************************************************************************
  *
@@ -73,13 +74,14 @@ public class GameArena extends BukkitRunnable implements Listener {
     private final GameManager gameManager;
     private final PlayerManager playerManager;
     private final Minigame minigame;
+    private final WinManager winManager;
     private final Configuration configuration;
     private final ItemStack spectatorServerExit = new ItemBuilder(Material.WATCH).setTitle(ChatColor.GREEN + "" + ChatColor.BOLD + "Back To Lobby").build(true);
     private final ItemStack trackPlayers = new ItemBuilder(Material.SKULL_ITEM).setTitle(ChatColor.LIGHT_PURPLE + "Track Players").build(true);
     private final ItemStack flySpeed = new ItemBuilder(Material.MINECART).setTitle(ChatColor.YELLOW + "Move Speed").build(true);
     private final BossBarAnnouncer spectatorBar = new BossBarAnnouncer(MinigameMessages.BOSS_BAR_SPECTATOR_MESSAGE.toString());
     private final List<TeamSpawnLocations> teamSpawnLocations = new ArrayList<>();
-    private final int maxCountdown = 13;
+    private final int maxCountdown = 11;
     private final boolean showDebug = true;
     private int countdown = maxCountdown;
     private int lastTeamSpawned = 0;
@@ -92,6 +94,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         this.gameManager = gameManager;
         this.playerManager = gameManager.getPlayerManager();
         this.minigame = minigame;
+        this.winManager = new WinManager(plugin, minigame);
         this.configuration = YamlConfiguration.loadConfiguration(
                 new File(plugin.getDataFolder() + "/" + gameType.getFileName())
         );
@@ -103,6 +106,9 @@ public class GameArena extends BukkitRunnable implements Listener {
     void setupArena() {
         ColorLogger.INFO.printLog(showDebug, "GameArena - setupArena()");
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+
+        // Clear entities from arena map
+        gameManager.clearWorldEntities(gameManager.getCurrentArenaWorldData().getWorldName());
     }
 
     /**
@@ -175,9 +181,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         playerMinigameData.setSelectedKit(null);
 
         // Remove potion effects
-        for (PotionEffect potionEffect : player.getActivePotionEffects()) {
-            player.removePotionEffect(potionEffect.getType());
-        }
+        for (PotionEffect potionEffect : player.getActivePotionEffects()) player.removePotionEffect(potionEffect.getType());
 
         // Clear inventory and armor
         player.getInventory().clear();
@@ -303,9 +307,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         spectator.getInventory().setBoots(null);
 
         // Remove spectator invisible potion effect
-        for (PotionEffect potionEffect : spectator.getActivePotionEffects()) {
-            spectator.removePotionEffect(potionEffect.getType());
-        }
+        for (PotionEffect potionEffect : spectator.getActivePotionEffects()) spectator.removePotionEffect(potionEffect.getType());
 
         // Restore player inventory
         if (playerMinigameData.isInventoryBackedUp()) {
@@ -339,9 +341,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         }
 
         // Return random world data.
-        if (worldDataList.size() - 1 > 1) {
-            return worldDataList.get(RandomChance.randomInt(0, worldDataList.size() - 1));
-        }
+        if (worldDataList.size() - 1 > 1) return worldDataList.get(RandomChance.randomInt(0, worldDataList.size() - 1));
 
         // If only one world exists, then just return the first one.
         return worldDataList.get(0);
@@ -423,7 +423,6 @@ public class GameArena extends BukkitRunnable implements Listener {
             for (Player players : Bukkit.getOnlinePlayers()) {
                 if (playerManager.getPlayerProfileData(players).isSpectator()) continue;
                 players.hidePlayer(spectators);
-
             }
         }
     }
@@ -514,66 +513,8 @@ public class GameArena extends BukkitRunnable implements Listener {
         ColorLogger.INFO.printLog(showDebug, "GameArena - showScores()");
         arenaState = ArenaState.ARENA_SHOW_SCORES;
 
-        if (countdown == 12) {
-            Map<Player, Double> finalScores = plugin.getGameManager().getScoreManager().getFinalScore();
-
-            // The map should only be null or empty if the game is forced closed.
-            if (finalScores == null || finalScores.isEmpty()) {
-                // Set to 4 so on next iteration it shows the returning to lobby message.
-                countdown = 4;
-                return;
-            }
-
-            List<Player> sortedPlayers = new ArrayList<>();
-
-            // TODO: Fix redundant sorting...
-            for (Player player : finalScores.keySet()) {
-                sortedPlayers.add(player);
-            }
-
-            ColorLogger.DEBUG.printLog(showDebug, sortedPlayers.toString());
-
-            //Show the game rules only once
-            Bukkit.broadcastMessage("");
-            Bukkit.broadcastMessage("");
-            Bukkit.broadcastMessage("");
-            Bukkit.broadcastMessage(MinigameMessages.GAME_BAR_SCORES.toString());
-            Bukkit.broadcastMessage("");
-
-            // First Place
-            Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.GREEN + "" + ChatColor.BOLD +
-                    "1st " + ChatColor.GREEN + sortedPlayers.get(0).getDisplayName()));
-
-            // Second Place
-            if (sortedPlayers.size() >= 2) {
-                Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.AQUA + "" + ChatColor.BOLD +
-                        "2nd " + ChatColor.AQUA + sortedPlayers.get(1).getDisplayName()));
-            }
-
-            // Third Place
-            if (sortedPlayers.size() >= 3) {
-                Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.LIGHT_PURPLE + "" + ChatColor.BOLD +
-                        "3rd " + ChatColor.LIGHT_PURPLE + sortedPlayers.get(2).getDisplayName()));
-            }
-
-            //Show players how they scored.
-            if (sortedPlayers.size() >= 4) {
-                for (int i = 3; i < sortedPlayers.size(); i++) {
-                    int place = i + 1;
-                    Bukkit.broadcastMessage("");
-                    sortedPlayers.get(i).sendMessage(CenterChatText.centerChatMessage(ChatColor.RED +
-                            "You placed " + place + "th place."));
-                }
-            }
-
-            Bukkit.broadcastMessage("");
-            Bukkit.broadcastMessage(MinigameMessages.GAME_BAR_BOTTOM.toString());
-            Bukkit.broadcastMessage("");
-        }
-
-        if (countdown == 3) {
-            Bukkit.broadcastMessage(MinigameMessages.GAME_END_RETURNING_TO_LOBBY.toString());
-        }
+        if (countdown == 10) winManager.printScores();
+        if (countdown == 2) Bukkit.broadcastMessage(MinigameMessages.GAME_END_RETURNING_TO_LOBBY.toString());
 
         // Scores Countdown
         if (countdown <= 0) {
@@ -661,6 +602,25 @@ public class GameArena extends BukkitRunnable implements Listener {
         return shouldEnd;
     }
 
+    /**
+     * If we need to kill the player, we can remove them from the arena
+     * and run the setup code to make them a spectator.
+     *
+     * @param player The player we want to kill.
+     */
+    public void killPlayer(Player player) {
+        PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
+        if (playerMinigameData.isSpectator()) return;
+
+        // Update team info
+        playerMinigameData.getSelectedTeam().getDeadPlayers().add(player);
+
+        // Convert to spectator
+        removeArenaPlayer(player, false);
+        addSpectator(player, false);
+        teleportSpectator(player);
+    }
+
     @EventHandler(priority = EventPriority.LOW)
     public void onBlockBreak(BlockBreakEvent event) {
         event.setCancelled(true);
@@ -695,14 +655,7 @@ public class GameArena extends BukkitRunnable implements Listener {
         // Run on the next tick to prevent teleport bug.
         new BukkitRunnable() {
             public void run() {
-
-                if (!playerManager.getPlayerProfileData(player).isSpectator()) {
-                    removeArenaPlayer(player, false);
-                    addSpectator(player, false);
-                }
-
-                teleportSpectator(player);
-
+                killPlayer(player);
                 cancel();
             }
         }.runTaskLater(plugin, 1L);
@@ -764,31 +717,27 @@ public class GameArena extends BukkitRunnable implements Listener {
     public void onPlayerMove(PlayerMoveEvent event) {
 
         // Stop the player from moving if the game is showing the rules.
-        if (arenaState == ArenaState.ARENA_TUTORIAL) {
-            Player player = event.getPlayer();
-            PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
-            boolean isSpectator = playerMinigameData.isSpectator();
+        if (arenaState != ArenaState.ARENA_TUTORIAL) return;
+        Player player = event.getPlayer();
+        PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
+        boolean isSpectator = playerMinigameData.isSpectator();
 
-            double moveX = event.getFrom().getX();
-            double moveZ = event.getFrom().getZ();
+        double moveX = event.getFrom().getX();
+        double moveZ = event.getFrom().getZ();
+        double moveToX = event.getTo().getX();
+        double moveToZ = event.getTo().getZ();
+        float pitch = event.getTo().getPitch();
+        float yaw = event.getTo().getYaw();
 
-            double moveToX = event.getTo().getX();
-            double moveToZ = event.getTo().getZ();
+        // If the countdown has started, then let the player look around and jump, but not walk/run.
+        if ((moveX == moveToX && moveZ == moveToZ) || isSpectator) return;
 
-            float pitch = event.getTo().getPitch();
-            float yaw = event.getTo().getYaw();
+        Location location = playerMinigameData.getArenaSpawnLocation();
+        location.setPitch(pitch);
+        location.setYaw(yaw);
 
-            // If the countdown has started, then let the player look around and jump, but not walk/run.
-            if ((moveX != moveToX || moveZ != moveToZ) && !isSpectator) {
-
-                Location location = playerMinigameData.getArenaSpawnLocation();
-                location.setPitch(pitch);
-                location.setYaw(yaw);
-
-                // Teleport player back to their arena spawn location.
-                player.teleport(location);
-            }
-        }
+        // Teleport player back to their arena spawn location.
+        player.teleport(location);
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -799,25 +748,5 @@ public class GameArena extends BukkitRunnable implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (shouldMinigameEnd(event.getPlayer())) minigame.endMinigame();
-    }
-
-    /**
-     * This is used to track the game state of the arena.
-     */
-    public enum ArenaState {
-        ARENA_WAITING,
-        ARENA_TUTORIAL,
-        ARENA_GAME_PLAYING,
-        ARENA_SHOW_SCORES,
-        ARENA_EXIT
-    }
-
-    @Getter
-    @Setter
-    @RequiredArgsConstructor
-    private class TeamSpawnLocations {
-        private final int index;
-        private final List<Location> locations;
-        private int lastTeamSpawnIndex = 0;
     }
 }

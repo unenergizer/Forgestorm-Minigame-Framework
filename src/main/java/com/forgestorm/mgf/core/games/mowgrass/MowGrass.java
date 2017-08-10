@@ -4,7 +4,6 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.mowgrass.kits.GrassPuncher;
 import com.forgestorm.mgf.core.kit.Kit;
-import com.forgestorm.mgf.core.score.ScoreData;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
 import org.bukkit.Bukkit;
@@ -99,9 +98,9 @@ public class MowGrass extends Minigame {
     }
 
     @Override
-    public List<ScoreData> getScoreData() {
-        List<ScoreData> scoreData = new ArrayList<>();
-        scoreData.add(new ScoreData(StatType.FIRST_KILL, true, 1.0));
+    public List<StatType> getStatTypes() {
+        List<StatType> scoreData = new ArrayList<>();
+        scoreData.add(StatType.FIRST_KILL);
         return scoreData;
     }
 

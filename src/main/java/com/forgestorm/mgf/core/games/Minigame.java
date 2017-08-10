@@ -1,9 +1,9 @@
 package com.forgestorm.mgf.core.games;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.GameArena;
+import com.forgestorm.mgf.constants.ArenaState;
 import com.forgestorm.mgf.core.kit.Kit;
-import com.forgestorm.mgf.core.score.ScoreData;
+import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
 import com.forgestorm.mgf.player.PlayerManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
@@ -11,11 +11,13 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
@@ -52,6 +54,7 @@ public abstract class Minigame implements Listener {
     protected boolean cancelFoodLevelChange = true;
     protected boolean cancelPlayerDropItems = true;
     protected boolean cancelPlayerPickupItems = true;
+    protected boolean cancelCreatureSpawn = true;
     private boolean gameOver = false;
 
     public Minigame(MinigameFramework plugin) {
@@ -76,7 +79,7 @@ public abstract class Minigame implements Listener {
 
     public abstract List<Team> getTeams();
 
-    public abstract List<ScoreData> getScoreData();
+    public abstract List<StatType> getStatTypes();
 
     public void setupPlayers() {
         PlayerManager playerManager = plugin.getGameManager().getPlayerManager();
@@ -99,24 +102,63 @@ public abstract class Minigame implements Listener {
         // Unregister stat listeners
         BlockBreakEvent.getHandlerList().unregister(this);
         BlockPlaceEvent.getHandlerList().unregister(this);
+        EntityDamageEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
         FoodLevelChangeEvent.getHandlerList().unregister(this);
         PlayerDropItemEvent.getHandlerList().unregister(this);
         PlayerPickupItemEvent.getHandlerList().unregister(this);
+        CreatureSpawnEvent.getHandlerList().unregister(this);
 
         // Show Scores
-        plugin.getGameManager().getGameArena().setArenaState(GameArena.ArenaState.ARENA_SHOW_SCORES);
+        plugin.getGameManager().getGameArena().setArenaState(ArenaState.ARENA_SHOW_SCORES);
+    }
+
+    /**
+     * Helper method to get the players MinigameData.
+     *
+     * @param player The player we need the data for.
+     * @return The players MiniGameData profile info.
+     */
+    protected PlayerMinigameData getPlayerMinigameData(Player player) {
+        return plugin.getGameManager().getPlayerManager().getPlayerProfileData(player);
+    }
+
+    /**
+     * Gets if the player is a spectator or not.
+     * @param entity The entity we want to check.
+     * @return True if the player is a spectator, false otherwise.
+     */
+    public boolean isSpectator(Entity entity) {
+        return entity instanceof Player && getPlayerMinigameData((Player) entity).isSpectator();
+    }
+
+    /**
+     * Gets if the player is a spectator or not.
+     * @param player The player we want to check.
+     * @return True if the player is a spectator, false otherwise.
+     */
+    public boolean isSpectator(Player player) {
+        return getPlayerMinigameData(player).isSpectator();
+    }
+
+    /**
+     * Helper method to kill the player and move them to spectator.
+     *
+     * @param player The player to kill.
+     */
+    protected void killPlayer(Player player) {
+        plugin.getGameManager().getGameArena().killPlayer(player);
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        if (plugin.getGameManager().getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) event.setCancelled(true);
+        if (isSpectator(event.getPlayer())) event.setCancelled(true);
         event.setCancelled(cancelBlockBreak);
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (plugin.getGameManager().getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) event.setCancelled(true);
+        if (isSpectator(event.getPlayer())) event.setCancelled(true);
         event.setCancelled(cancelBlockPlace);
     }
 
@@ -132,21 +174,24 @@ public abstract class Minigame implements Listener {
 
     @EventHandler
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
-        if (event.getEntity() instanceof Player) {
-            if (plugin.getGameManager().getPlayerManager().getPlayerProfileData((Player) event.getEntity()).isSpectator()) event.setCancelled(true);
-        }
+        if (isSpectator(event.getEntity())) event.setCancelled(true);
         event.setCancelled(cancelFoodLevelChange);
     }
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (plugin.getGameManager().getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) event.setCancelled(true);
+        if (isSpectator(event.getPlayer())) event.setCancelled(true);
         event.setCancelled(cancelPlayerDropItems);
     }
 
     @EventHandler
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
-        if (plugin.getGameManager().getPlayerManager().getPlayerProfileData(event.getPlayer()).isSpectator()) event.setCancelled(true);
+        if (isSpectator(event.getPlayer())) event.setCancelled(true);
         event.setCancelled(cancelPlayerPickupItems);
+    }
+
+    @EventHandler
+    public void onCreatureSpawn(CreatureSpawnEvent event) {
+        event.setCancelled(cancelCreatureSpawn);
     }
 }
