@@ -167,6 +167,7 @@ public class MobMurder extends Minigame {
         } else {
             playerScore.put(player, amount);
         }
+
     }
 
     @EventHandler(priority = EventPriority.HIGH)
