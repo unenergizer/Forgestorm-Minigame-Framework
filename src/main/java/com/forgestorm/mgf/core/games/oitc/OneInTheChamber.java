@@ -142,7 +142,6 @@ public class OneInTheChamber extends Minigame {
 
     }
 
-
     /**
      * Adds players scores up as the game progresses.
      *

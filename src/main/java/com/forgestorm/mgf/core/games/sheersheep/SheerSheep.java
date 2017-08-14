@@ -53,15 +53,14 @@ import java.util.Random;
 
 public class SheerSheep extends Minigame {
 
-    private final SpawnSheep spawnSheep;
     private final int maxScore = 80;
     private final Map<Player, Integer> playerScore = new HashMap<>();
+    private SpawnSheep spawnSheep;
     private ArenaPointsCounter arenaPointsCounter;
     private boolean gameOver = false;
 
     public SheerSheep(MinigameFramework plugin) {
         super(plugin);
-        spawnSheep = new SpawnSheep(plugin);
     }
 
     @Override
@@ -69,13 +68,14 @@ public class SheerSheep extends Minigame {
         arenaPointsCounter = new ArenaPointsCounter();
         arenaPointsCounter.addAllPlayers();
 
-        spawnSheep.spawnSheep();
+        spawnSheep = new SpawnSheep(plugin);
+        spawnSheep.run();
     }
 
     @Override
     public void disableGame() {
         // Cancel threads
-        spawnSheep.cancelSheepSpawn();
+        spawnSheep.cancelRunnable();
 
         // This can be null if the game ends during the tutorial stage.
         if (arenaPointsCounter != null) {

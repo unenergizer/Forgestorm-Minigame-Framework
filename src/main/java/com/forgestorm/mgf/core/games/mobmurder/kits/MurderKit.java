@@ -1,10 +1,11 @@
-package com.forgestorm.mgf.core.games.pirateattack.kits;
+package com.forgestorm.mgf.core.games.mobmurder.kits;
 
 import com.forgestorm.mgf.core.kit.Kit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 /*********************************************************************************
  *
@@ -22,12 +23,16 @@ import org.bukkit.entity.Player;
  * without the prior written permission of the owner.
  */
 
-public class Pirate extends Kit {
+public class MurderKit extends Kit {
 
-    public Pirate() {
-        super("MurderKit", ChatColor.AQUA, EntityType.CAVE_SPIDER, Material.BEDROCK, new String[] { "This is a pirate kit." });
+    public MurderKit() {
+        super("Slash the Mob", ChatColor.AQUA, EntityType.BLAZE, Material.BEDROCK, new String[] { "This is a dirty kit." });
     }
 
     @Override
-    public void giveKit(Player player) {}
+    public void giveKit(Player player) {
+        ItemStack sword = new ItemStack(Material.IRON_SWORD);
+
+        player.getInventory().setItem(0, sword);
+    }
 }

@@ -2,7 +2,6 @@ package com.forgestorm.mgf.core.games.sheersheep;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -28,26 +27,29 @@ import java.util.Random;
  * without the prior written permission of the owner.
  */
 
-class SpawnSheep {
+public class SpawnSheep {
 
     private final MinigameFramework plugin;
     private final int maxSheepCount = 30;
-    private World world;
-    private boolean spawnSheep;
+    private Random random = new Random();
+    private World world = Bukkit.getWorld(GameManager.getInstance().getCurrentArenaWorldData().getWorldName());
+    private boolean cancel = false;
 
     SpawnSheep(MinigameFramework plugin) {
         this.plugin = plugin;
     }
 
-    void spawnSheep() {
-        Random random = new Random();
-        spawnSheep = true;
-        world = Bukkit.getWorld(GameManager.getInstance().getCurrentArenaWorldData().getWorldName());
-        ColorLogger.DEBUG.printLog("SpawningSheep!");
+    void cancelRunnable() {
+        cancel = true;
+    }
+
+    public void run() {
         new BukkitRunnable() {
 
             @Override
             public void run() {
+                if (cancel) cancel();
+
                 int currentSheepCount = getSheepCount();
 
                 if (currentSheepCount <= maxSheepCount) {
@@ -56,29 +58,20 @@ class SpawnSheep {
                         location.getWorld().spawnEntity(location, EntityType.SHEEP);
                     }
                 }
-
-                //If game is over, lets stop spawning sheep.
-                if (!spawnSheep) {
-                    //Stop the thread first.
-                    cancel();
-                }
             }
+
         }.runTaskTimer(plugin, 0, 20);
     }
 
     private int getSheepCount() {
         int sheep = 0;
 
-        for(Entity entity : world.getEntities()) {
+        for (Entity entity : world.getEntities()) {
             if (entity.getType() == EntityType.SHEEP) {
                 sheep++;
             }
         }
 
         return sheep;
-    }
-
-    void cancelSheepSpawn() {
-        this.spawnSheep = false;
     }
 }

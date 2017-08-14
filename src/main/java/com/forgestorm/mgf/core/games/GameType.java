@@ -1,6 +1,7 @@
 package com.forgestorm.mgf.core.games;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.games.mobmurder.MobMurder;
 import com.forgestorm.mgf.core.games.oitc.OneInTheChamber;
 import com.forgestorm.mgf.core.games.pirateattack.PirateAttack;
 import com.forgestorm.mgf.core.games.sheersheep.SheerSheep;
@@ -27,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 @SuppressWarnings("unused")
 public enum GameType {
 
+    MOB_MURDER(MobMurder.class, "Mob Murder"),
     OITC(OneInTheChamber.class, "One In the Chamber"),
     PIRATE_ATTACK(PirateAttack.class, "Pirate Attack"),
     SHEER_SHEEP(SheerSheep.class, "Sheer Sheep"),
