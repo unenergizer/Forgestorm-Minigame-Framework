@@ -1,4 +1,4 @@
-package com.forgestorm.mgf.core.world;
+package com.forgestorm.mgf.util.world;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -21,7 +21,7 @@ import org.bukkit.entity.Player;
 
 public class TeleportFix2 {
 
-    public void fixTeleport(Player teleportedPlayer) {
+    public static void fixTeleport(Player teleportedPlayer) {
         // Hide each player from the teleported player.
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;

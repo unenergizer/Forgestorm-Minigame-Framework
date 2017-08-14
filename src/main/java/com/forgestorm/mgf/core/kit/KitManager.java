@@ -128,7 +128,7 @@ public class KitManager implements Listener {
     private void toggleKitInteract(Player player, Entity entity) {
         if (!kitEntities.containsKey(entity)) return;
 
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
         Kit clickedKit = kitEntities.get(entity);
         Kit currentKit = playerMinigameData.getSelectedKit();
         String sameKitMessage = "";

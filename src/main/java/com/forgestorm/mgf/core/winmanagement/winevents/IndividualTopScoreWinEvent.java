@@ -1,6 +1,5 @@
 package com.forgestorm.mgf.core.winmanagement.winevents;
 
-import com.forgestorm.mgf.core.winmanagement.ScoreData;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -27,10 +26,10 @@ import java.util.Map;
 public class IndividualTopScoreWinEvent extends Event {
 
     private static final HandlerList handlerList = new HandlerList();
-    private final Map<Player, ScoreData> playerScoreMap;
+    private final Map<Player, Integer> playerScoreMap;
     private final String unit;
 
-    public IndividualTopScoreWinEvent(Map<Player, ScoreData> playerScoreMap, String unit) {
+    public IndividualTopScoreWinEvent(Map<Player, Integer> playerScoreMap, String unit) {
         this.playerScoreMap = playerScoreMap;
         this.unit = unit;
     }

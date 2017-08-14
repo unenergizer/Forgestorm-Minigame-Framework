@@ -4,10 +4,17 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.games.GameType;
 import com.forgestorm.mgf.core.games.Minigame;
-import com.forgestorm.mgf.core.score.ScoreManager;
+import com.forgestorm.mgf.core.location.GameArena;
+import com.forgestorm.mgf.core.location.GameLobby;
+import com.forgestorm.mgf.core.location.access.ArenaPlayerAccess;
+import com.forgestorm.mgf.core.location.access.ArenaSpectatorAccess;
+import com.forgestorm.mgf.core.location.access.LobbyAccess;
+import com.forgestorm.mgf.core.score.StatManager;
+import com.forgestorm.mgf.core.team.TeamSpawnLocations;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.core.world.WorldManager;
-import com.forgestorm.mgf.player.PlayerManager;
+import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.mgf.player.PlayerMinigameManager;
 import com.forgestorm.spigotcore.events.UpdateScoreboardEvent;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.Getter;
@@ -15,10 +22,14 @@ import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.Configuration;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,13 +51,18 @@ import java.util.stream.Collectors;
 @Getter
 public class GameManager extends BukkitRunnable {
 
-    private final MinigameFramework plugin;
-    private final PlayerManager playerManager;
-    private final WorldManager worldManager;
-    private final List<String> gamesToPlay;
-    private ScoreManager scoreManager;
+    private static GameManager instance = null;
+    private final boolean showDebug = true;
+    private boolean isSetup = false;
+    private boolean isRunning = false;
+    private MinigameFramework plugin;
+    private PlayerMinigameManager playerMinigameManager;
+    private WorldManager worldManager;
+    private List<String> gamesToPlay;
+    private StatManager statManager;
     private GameLobby gameLobby;
     private GameArena gameArena;
+    private Configuration arenaConfiguration;
     private GameType currentMinigameType;
     private Minigame currentMinigame;
     private int maxPlayersOnline = 16;
@@ -56,13 +72,39 @@ public class GameManager extends BukkitRunnable {
     private WorldData currentArenaWorldData;
     private boolean currentArenaWorldLoaded = false;
     private boolean inLobby = true;
-    private final boolean showDebug = true;
+    private List<TeamSpawnLocations> teamSpawnLocations;
 
-    public GameManager(MinigameFramework plugin) {
+    private GameManager() {
+    }
+
+    /**
+     * Gets the current instance of GameManager.
+     *
+     * @return An instance of GameManager. If not created, it will create one.
+     */
+    public static GameManager getInstance() {
+        if (instance == null) {
+            instance = new GameManager();
+            return instance;
+        }
+        return instance;
+    }
+
+    /**
+     * This will setup GameManager for first time use.
+     *
+     * @param plugin An instance of the main plugin class.
+     */
+    public void setup(MinigameFramework plugin) {
+        // Prevent setup from being run more than once.
+        if (isSetup) return;
+        isSetup = true;
+
+        // Initialize needed classes.
         this.plugin = plugin;
-        this.playerManager = new PlayerManager(plugin, this);
-        this.worldManager = new WorldManager(plugin);
-        this.gamesToPlay = plugin.getConfigGameList();
+        playerMinigameManager = new PlayerMinigameManager();
+        worldManager = new WorldManager(plugin);
+        gamesToPlay = plugin.getConfigGameList();
 
         // Start world manager repeating task.
         worldManager.runTaskTimer(plugin, 0, 20);
@@ -72,6 +114,9 @@ public class GameManager extends BukkitRunnable {
 
         // On first load, lets init our first game.
         selectGame();
+
+        // Start the BukkitRunnable thread.
+        this.runTaskTimer(plugin, 0, 20);
     }
 
     /**
@@ -79,7 +124,6 @@ public class GameManager extends BukkitRunnable {
      * Games that will be played are assigned in the config file.
      */
     private void selectGame() {
-        ColorLogger.INFO.printLog(showDebug, "GameManager - selectGame()");
         int totalGames = gamesToPlay.size() - 1;
 
         // Basic game selection based on array list index.
@@ -92,6 +136,10 @@ public class GameManager extends BukkitRunnable {
         currentMinigameType = GameType.valueOf(plugin.getConfigGameList().get(currentGameIndex));
         currentMinigame = currentMinigameType.getMinigame(plugin);
 
+        // Get arena configuration (for loading worlds)
+        arenaConfiguration = YamlConfiguration.loadConfiguration(
+                new File(plugin.getDataFolder() + "/" + currentMinigameType.getFileName()));
+
         // Now setup the game!
         setupGame();
     }
@@ -100,27 +148,12 @@ public class GameManager extends BukkitRunnable {
      * This will setup the current minigame lobby and arena.
      */
     private void setupGame() {
-        ColorLogger.INFO.printLog(showDebug, "GameManager - setupGame()");
         // Set defaults
         inLobby = true;
         currentArenaWorldLoaded = false;
 
-        // Create and setup the lobby
-        gameLobby = new GameLobby(plugin, this, currentMinigame);
-        gameLobby.setupLobby();
-        gameLobby.setupAllPlayers();
-        //gameLobby.resetPlayerScoreboards();
-        gameLobby.runTaskTimer(plugin, 0, 20);
-
-        // Create Arena
-        gameArena = new GameArena(plugin, this, currentMinigame, currentMinigameType);
-        gameArena.runTaskTimer(plugin, 0, 20);
-
-        // Setup the score manager.
-        scoreManager = new ScoreManager(plugin);
-
         // Load arena world
-        WorldData worldToLoad = gameArena.getRandomArenaWorld();
+        WorldData worldToLoad = worldManager.getRandomArenaWorld(arenaConfiguration);
 
         // If the worldData isn't null and the worldData doesn't equal the current one,
         // then we will unload the current arena and then load a new one.  We do this
@@ -131,13 +164,21 @@ public class GameManager extends BukkitRunnable {
             // An arena world has not been loaded. Lets do that now.
             worldManager.getWorld(currentArenaWorldData = worldToLoad);
 
-        } else if (!currentArenaWorldData.getWorldName().equals(worldToLoad.getWorldName())) {
+        } else {
             // Unload the previous arena world.
             worldManager.unloadWorld(currentArenaWorldData);
 
             // Load the next world
             worldManager.getWorld(currentArenaWorldData = worldToLoad);
         }
+
+        // Create and setup the lobby
+        gameLobby = new GameLobby();
+        gameLobby.setupGameLocation();
+        gameLobby.allPlayersJoin(new LobbyAccess());
+
+        // Setup the stat manager.
+        statManager = new StatManager(plugin);
     }
 
     /**
@@ -145,26 +186,34 @@ public class GameManager extends BukkitRunnable {
      * we will teleport all the players into the arena and
      * do the proper countdowns.
      */
-    void switchToArena() {
-        ColorLogger.INFO.printLog(showDebug, "GameManager - switchToArena()");
+    public void switchToArena() {
         inLobby = false;
 
         // Stop lobby code and remove lobby players.
-        gameLobby.destroyLobby();
-        gameLobby.removeAllPlayers();
+        gameLobby.destroyGameLocation();
+        gameLobby.allPlayersQuit(new LobbyAccess());
 
-        // Switch to the lobby!
-        gameArena.setupArena();
-        gameArena.addAllArenaPlayers();
+        // Clear entities from arena map
+        clearWorldEntities(currentArenaWorldData.getWorldName());
+
+        // Backup player inventories.
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            playerMinigameManager.makePlayerInventoryBackup(player);
+        }
+
+        // Switch to the game arena!
+        gameArena = new GameArena();
+        gameArena.setupGameLocation();
+        gameArena.allPlayersJoin(new ArenaPlayerAccess());
         gameArena.showTutorialInfo();
 
         // Build stat type lists for scores.
         List<Player> players = Bukkit.getOnlinePlayers().stream()
                 .filter(player -> !player.hasMetadata("NPC"))
-                .filter(player -> !playerManager.getPlayerProfileData(player).isSpectator())
+                .filter(player -> !playerMinigameManager.getPlayerProfileData(player).isSpectator())
                 .collect(Collectors.toList());
 
-        scoreManager.initStats(players, currentMinigame.getStatTypes());
+        statManager.initStats(players, currentMinigame.getStatTypes());
     }
 
     /**
@@ -174,28 +223,31 @@ public class GameManager extends BukkitRunnable {
      * @param startNewGame True if a new game should be
      *                     started. False otherwise.
      */
-    @SuppressWarnings("WeakerAccess")
     public void endGame(boolean startNewGame) {
-        ColorLogger.INFO.printLog(showDebug, "GameManager - endGame()");
-
         // Disable the lobby and the arena
         clearWorldEntities(currentArenaWorldData.getWorldName());
-        gameArena.destroyArena();
+        gameArena.destroyGameLocation();
 
         // Remove players
         if (inLobby) {
             // Remove lobby players.
-            gameLobby.removeAllPlayers();
+            gameLobby.allPlayersQuit(new LobbyAccess());
         } else {
             // Remove arena players and spectators.
-            gameArena.removePlayersFromArena();
+            gameArena.allPlayersQuit(new ArenaPlayerAccess());
+            gameArena.allPlayersQuit(new ArenaSpectatorAccess());
+        }
+
+        // Restore player inventories.
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            playerMinigameManager.restorePlayerInventoryBackup(player);
         }
 
         // Update database
-        scoreManager.updateDatabase();
+        statManager.updateDatabase();
 
         // Unregister stat stat listeners.
-        scoreManager.deregisterListeners();
+        statManager.deregisterListeners();
 
         // Determines if a new game should start.
         // Typically if the server is shutting down or
@@ -207,13 +259,20 @@ public class GameManager extends BukkitRunnable {
      * Called when the server is shutting down or restarting.
      */
     public void onDisable() {
+        // Cancel thread
+        if (isRunning) cancel();
+
+        // End game and prevent a new game from starting up.
         endGame(false);
 
-        playerManager.onDisable();
+        // Disable player manager.
+        playerMinigameManager.onDisable();
     }
 
     @Override
     public void run() {
+        isRunning = true;
+
         // Check for game completion
         if (!isInLobby() && currentMinigame.isGameOver()) endGame(true);
 
@@ -221,7 +280,7 @@ public class GameManager extends BukkitRunnable {
         if (!currentArenaWorldLoaded && worldManager.isWorldLoaded(currentArenaWorldData)) {
             // Set some bool world loaded.
             currentArenaWorldLoaded = true;
-            gameArena.generateTeamSpawnLocations(currentArenaWorldData);
+            teamSpawnLocations = worldManager.generateTeamSpawnLocations(currentArenaWorldData, arenaConfiguration);
         }
     }
 
@@ -230,8 +289,9 @@ public class GameManager extends BukkitRunnable {
      *
      * @param worldName The name of the world to clear entities in.
      */
-    public void clearWorldEntities(String worldName) {
-        for (Entity entity : Bukkit.getWorld(worldName).getEntities()) if (!(entity instanceof Player)) entity.remove();
+    private void clearWorldEntities(String worldName) {
+        for (Entity entity : Bukkit.getWorld(worldName).getEntities())
+            if (!(entity instanceof Player) && !(entity instanceof ArmorStand)) entity.remove();
     }
 
     /**
@@ -259,5 +319,43 @@ public class GameManager extends BukkitRunnable {
 
         maxPlayersOnline = num;
         return true;
+    }
+
+    /**
+     * Gets if the minigame should start.
+     *
+     * @return True if should start, false otherwise.
+     */
+    public boolean shouldMinigameStart() {
+        return Bukkit.getOnlinePlayers().size() >= minPlayersToStartGame;
+    }
+
+    /**
+     * This is a check to see if the game should end.
+     * If there aren't enough players, then we should
+     * end the games.  Added to ability to make sure
+     * that when we run this check we are filtering
+     * out spectator players.
+     */
+    public boolean shouldMinigameEnd(Player exitPlayer) {
+        int minigamePlayers = 0;
+        boolean shouldEnd = false;
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player == exitPlayer) continue;
+            PlayerMinigameData playerMinigameData = playerMinigameManager.getPlayerProfileData(player);
+            if (playerMinigameData == null || playerMinigameData.isSpectator()) continue;
+            minigamePlayers++;
+        }
+
+        if (minigamePlayers < minPlayersToStartGame) {
+            shouldEnd = true;
+
+            // Send error message.
+            Bukkit.broadcastMessage(" ");
+            Bukkit.broadcastMessage(MinigameMessages.ALERT.toString() + MinigameMessages.GAME_COUNTDOWN_NOT_ENOUGH_PLAYERS.toString());
+        }
+
+        return shouldEnd;
     }
 }

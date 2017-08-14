@@ -1,14 +1,10 @@
 package com.forgestorm.mgf.core.scoreboard;
 
-import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.score.StatType;
-import com.forgestorm.spigotcore.constants.SpigotCoreMessages;
-import io.puharesource.mc.titlemanager.api.v2.TitleManagerAPI;
-import lombok.Setter;
+import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.util.MapUtil;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
 
@@ -28,75 +24,35 @@ import java.util.Map;
  * without the prior written permission of the owner.
  */
 
-public class ArenaPointsCounter extends BukkitRunnable {
-
-    private final MinigameFramework plugin;
-    private final StatType statType;
-    private final TitleManagerAPI titleManagerAPI;
-    @Setter
-    private boolean cancelTask = false;
-
-
-    public ArenaPointsCounter(MinigameFramework plugin, StatType statType) {
-        this.plugin = plugin;
-        this.statType = statType;
-        titleManagerAPI = plugin.getTitleManagerAPI();
-    }
+public class ArenaPointsCounter extends ArenaScoreboard {
 
     /**
-     * Gives all players a scoreboard.
+     * Set the scores for the lobby scoreboard.
      */
-    public void addAllPlayers() {
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            // Tarkan board setup
-            titleManagerAPI.giveScoreboard(player);
+    public void setBoardData(Map<Player, Integer> scores) {
+        Map<Player, Integer> sortedMap = MapUtil.sortByValueReverse(scores);
 
-            // Set scoreboard title
-            titleManagerAPI.setScoreboardTitle(player, SpigotCoreMessages.SCOREBOARD_TITLE.toString());
-        }
-    }
-
-    /**
-     * Removes all player scoreboards.
-     */
-    public void removeAllPlayers() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!titleManagerAPI.hasScoreboard(player)) return;
-            titleManagerAPI.removeScoreboard(player);
+            int line = 1;
+            for (Map.Entry<Player, Integer> entry : sortedMap.entrySet()) {
+                if (line > scores.size() || line > 15) return;
+
+                Player scoreboardEntry = entry.getKey();
+                String score = Integer.toString(entry.getValue());
+
+                titleManagerAPI.setScoreboardValue(player, line, score + " " + ChatColor.GREEN + scoreboardEntry.getDisplayName());
+
+                line++;
+            }
         }
     }
 
     @Override
-    public void run() {
-        if (cancelTask) {
-            cancel();
-            return;
-        }
-
-        // TODO: IMPLEMENT NON LOOP BASED SCOREBOARD UPDATES!!
-
-        // Update scoreboard data
-//        for (Player player : Bukkit.getOnlinePlayers()) {
-//            setBoardData(player, plugin.getGameManager().getScoreManager().generateTopScores(statType));
-//        }
-    }
-
-    /**
-     * Set the scores for the lobby scoreboard.
-     *
-     * @param player The player that we are setting scores for.
-     */
-    private void setBoardData(Player player, Map<Player, Double> scores) {
+    public void initBeginningLines(Player scoreboardOwner) {
         int line = 1;
-
-        for (Map.Entry<Player, Double> scoreData : scores.entrySet()) {
-            if (line > scores.size() || line > 15) return;
-
-            String name = scoreData.getKey().getDisplayName();
-            String score = Integer.toString((int) scoreData.getValue().doubleValue());
-
-            titleManagerAPI.setScoreboardValue(player, line, score + " " + ChatColor.GREEN + name);
-
+        for (Player scoreboardEntry : Bukkit.getOnlinePlayers()) {
+            if (GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(scoreboardEntry).isSpectator()) continue;
+            titleManagerAPI.setScoreboardValue(scoreboardOwner, line, 0 + " " + ChatColor.GREEN + scoreboardEntry.getDisplayName());
             line++;
         }
     }

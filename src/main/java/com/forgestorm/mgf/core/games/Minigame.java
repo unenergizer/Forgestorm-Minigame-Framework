@@ -2,10 +2,11 @@ package com.forgestorm.mgf.core.games;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.ArenaState;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.team.Team;
-import com.forgestorm.mgf.player.PlayerManager;
+import com.forgestorm.mgf.player.PlayerMinigameManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,7 +58,7 @@ public abstract class Minigame implements Listener {
     protected boolean cancelCreatureSpawn = true;
     private boolean gameOver = false;
 
-    public Minigame(MinigameFramework plugin) {
+    protected Minigame(MinigameFramework plugin) {
         this.plugin = plugin;
     }
 
@@ -67,7 +68,7 @@ public abstract class Minigame implements Listener {
 
     public abstract void setupGame();
 
-    public abstract void disableGame();
+    protected abstract void disableGame();
 
     public abstract World getLobbyWorld();
 
@@ -82,10 +83,10 @@ public abstract class Minigame implements Listener {
     public abstract List<StatType> getStatTypes();
 
     public void setupPlayers() {
-        PlayerManager playerManager = plugin.getGameManager().getPlayerManager();
+        PlayerMinigameManager playerMinigameManager = GameManager.getInstance().getPlayerMinigameManager();
 
         for (Player player : Bukkit.getOnlinePlayers()) {
-            PlayerMinigameData playerMinigameData = playerManager.getPlayerProfileData(player);
+            PlayerMinigameData playerMinigameData = playerMinigameManager.getPlayerProfileData(player);
             if (playerMinigameData.isSpectator()) return;
 
             // Give the player their kit
@@ -110,7 +111,7 @@ public abstract class Minigame implements Listener {
         CreatureSpawnEvent.getHandlerList().unregister(this);
 
         // Show Scores
-        plugin.getGameManager().getGameArena().setArenaState(ArenaState.ARENA_SHOW_SCORES);
+        GameManager.getInstance().getGameArena().setArenaState(ArenaState.ARENA_SHOW_SCORES);
     }
 
     /**
@@ -120,7 +121,7 @@ public abstract class Minigame implements Listener {
      * @return The players MiniGameData profile info.
      */
     protected PlayerMinigameData getPlayerMinigameData(Player player) {
-        return plugin.getGameManager().getPlayerManager().getPlayerProfileData(player);
+        return GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(player);
     }
 
     /**
@@ -128,7 +129,7 @@ public abstract class Minigame implements Listener {
      * @param entity The entity we want to check.
      * @return True if the player is a spectator, false otherwise.
      */
-    public boolean isSpectator(Entity entity) {
+    private boolean isSpectator(Entity entity) {
         return entity instanceof Player && getPlayerMinigameData((Player) entity).isSpectator();
     }
 
@@ -137,7 +138,7 @@ public abstract class Minigame implements Listener {
      * @param player The player we want to check.
      * @return True if the player is a spectator, false otherwise.
      */
-    public boolean isSpectator(Player player) {
+    private boolean isSpectator(Player player) {
         return getPlayerMinigameData(player).isSpectator();
     }
 
@@ -147,7 +148,7 @@ public abstract class Minigame implements Listener {
      * @param player The player to kill.
      */
     protected void killPlayer(Player player) {
-        plugin.getGameManager().getGameArena().killPlayer(player);
+        GameManager.getInstance().getGameArena().killPlayer(player);
     }
 
     @EventHandler

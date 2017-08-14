@@ -8,6 +8,7 @@ import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
 import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.core.winmanagement.winevents.IndividualTopScoreWinEvent;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -18,14 +19,20 @@ import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Sheep;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /*********************************************************************************
@@ -44,13 +51,13 @@ import java.util.Random;
  * without the prior written permission of the owner.
  */
 
-@SuppressWarnings("unused")
 public class SheerSheep extends Minigame {
 
     private final SpawnSheep spawnSheep;
     private final int maxScore = 80;
-    private final StatType mainStatType = StatType.PICKUP_ITEM;
+    private final Map<Player, Integer> playerScore = new HashMap<>();
     private ArenaPointsCounter arenaPointsCounter;
+    private boolean gameOver = false;
 
     public SheerSheep(MinigameFramework plugin) {
         super(plugin);
@@ -59,9 +66,8 @@ public class SheerSheep extends Minigame {
 
     @Override
     public void setupGame() {
-        arenaPointsCounter = new ArenaPointsCounter(plugin, mainStatType);
+        arenaPointsCounter = new ArenaPointsCounter();
         arenaPointsCounter.addAllPlayers();
-        arenaPointsCounter.runTaskTimerAsynchronously(plugin, 0, 10);
 
         spawnSheep.spawnSheep();
     }
@@ -73,15 +79,17 @@ public class SheerSheep extends Minigame {
 
         // This can be null if the game ends during the tutorial stage.
         if (arenaPointsCounter != null) {
-            arenaPointsCounter.setCancelTask(true);
             arenaPointsCounter.removeAllPlayers();
         }
 
+        // Clear score map
+        playerScore.clear();
+
         // Unregister listeners
         PlayerShearEntityEvent.getHandlerList().unregister(this);
+        PlayerPickupItemEvent.getHandlerList().unregister(this);
+        CreatureSpawnEvent.getHandlerList().unregister(this);
     }
-
-    private Kit defaultKit, kit2;
 
     @Override
     public World getLobbyWorld() {
@@ -108,7 +116,7 @@ public class SheerSheep extends Minigame {
                 -1,
                 EntityType.SHEEP,
                 Material.BOOKSHELF,
-                new String[] {"Every player from themselves!!", "Compete to be the best!"}));
+                new String[]{"Every player from themselves!!", "Compete to be the best!"}));
         return team;
     }
 
@@ -155,5 +163,45 @@ public class SheerSheep extends Minigame {
         }
 
         sheep.setHealth(0);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onItemPickUp(PlayerPickupItemEvent event) {
+        if (event.getItem().getItemStack().getType() != Material.WOOL) return;
+        event.setCancelled(false);
+        Player player = event.getPlayer();
+        int amount = event.getItem().getItemStack().getAmount();
+        addScore(player, amount);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onCreatureSpawn(CreatureSpawnEvent event) {
+        if (!(event.getEntity() instanceof Sheep)) return;
+        event.setCancelled(false);
+    }
+
+    /**
+     * Adds players scores up as the game progresses.
+     *
+     * @param player The player we will add a score for.
+     * @param amount The amount of wool the player picked up.
+     */
+    private void addScore(Player player, int amount) {
+        if (gameOver) return;
+        if (playerScore.containsKey(player)) {
+            int current = playerScore.get(player);
+            int totalScore = amount + current;
+            playerScore.replace(player, amount + current);
+
+            // Update the scoreboard.
+            arenaPointsCounter.setBoardData(playerScore);
+
+            if (totalScore >= maxScore) {
+                gameOver = true;
+                Bukkit.getPluginManager().callEvent(new IndividualTopScoreWinEvent(playerScore, "wool picked up"));
+            }
+        } else {
+            playerScore.put(player, amount);
+        }
     }
 }

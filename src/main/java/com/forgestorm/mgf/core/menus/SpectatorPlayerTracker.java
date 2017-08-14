@@ -1,6 +1,7 @@
 package com.forgestorm.mgf.core.menus;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.spigotcore.menus.Menu;
 import com.forgestorm.spigotcore.menus.actions.TeleportPlayer;
 import org.bukkit.Bukkit;
@@ -28,11 +29,8 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 public class SpectatorPlayerTracker extends Menu {
 
-    private final MinigameFramework plugin;
-
     public SpectatorPlayerTracker(MinigameFramework plugin) {
         super(plugin.getSpigotCore());
-        this.plugin = plugin;
         init("Player Tracker", getRowsNeeded());
         makeMenuItems();
     }
@@ -45,7 +43,7 @@ public class SpectatorPlayerTracker extends Menu {
     private int getRowsNeeded() {
         int playerCount = 0;
         for (Player players : Bukkit.getOnlinePlayers()) {
-            if (plugin.getGameManager().getPlayerManager().getPlayerProfileData(players).isSpectator()) continue;
+            if (GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(players).isSpectator()) continue;
             playerCount++;
         }
         return 1 + (playerCount / 9);
@@ -55,7 +53,7 @@ public class SpectatorPlayerTracker extends Menu {
     protected void makeMenuItems() {
         int i = 0;
         for (Player targetPlayer : Bukkit.getOnlinePlayers()) {
-            if (plugin.getGameManager().getPlayerManager().getPlayerProfileData(targetPlayer).isSpectator()) continue;
+            if (GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(targetPlayer).isSpectator()) continue;
             setItem(createPlayerSkull(targetPlayer), i++, new TeleportPlayer(targetPlayer));
         }
     }

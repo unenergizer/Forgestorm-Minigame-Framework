@@ -27,8 +27,8 @@ import java.util.Map;
 public class TeamTopScoreWinEvent extends Event {
 
     private static final HandlerList handlerList = new HandlerList();
-    private Map<Team, ScoreData> teamScoreMap;
-    private String unit;
+    private final Map<Team, ScoreData> teamScoreMap;
+    private final String unit;
 
     public TeamTopScoreWinEvent(Map<Team, ScoreData> teamScoreMap, String unit) {
         this.teamScoreMap = teamScoreMap;

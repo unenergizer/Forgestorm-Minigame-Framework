@@ -1,6 +1,7 @@
 package com.forgestorm.mgf.core.games.sheersheep.statlisteners;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
 import org.bukkit.ChatColor;
@@ -26,13 +27,9 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
  * without the prior written permission of the owner.
  */
 
-@SuppressWarnings("unused")
 public class PickupItem implements StatListener {
 
-    private MinigameFramework plugin;
-
     public PickupItem(MinigameFramework plugin) {
-        this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -47,7 +44,7 @@ public class PickupItem implements StatListener {
         event.setCancelled(false);
         Player player = event.getPlayer();
         int amount = event.getItem().getItemStack().getAmount();
-        plugin.getGameManager().getScoreManager().addStat(StatType.PICKUP_ITEM, player, amount);
+        GameManager.getInstance().getStatManager().addStat(StatType.PICKUP_ITEM, player, amount);
         event.getPlayer().sendMessage(ChatColor.GREEN + "+" + ChatColor.RESET + amount);
     }
 }

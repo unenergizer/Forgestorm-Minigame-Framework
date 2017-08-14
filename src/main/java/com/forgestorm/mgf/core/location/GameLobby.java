@@ -1,13 +1,9 @@
-package com.forgestorm.mgf.core;
+package com.forgestorm.mgf.core.location;
 
-import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
-import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.kit.KitManager;
 import com.forgestorm.mgf.core.scoreboard.TarkanLobbyScoreboard;
 import com.forgestorm.mgf.core.team.TeamManager;
-import com.forgestorm.mgf.core.world.TeleportFix2;
-import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.mgf.util.display.TipAnnouncer;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
 import com.forgestorm.spigotcore.player.DoubleJump;
@@ -17,14 +13,12 @@ import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityCombustEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
@@ -42,7 +36,7 @@ import org.bukkit.scheduler.BukkitRunnable;
  * OWNER: Robert Andrew Brown & Joseph Rugh
  * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
  * PROJECT: forgestorm-minigame-framework
- * DATE: 6/2/2017
+ * DATE: 8/14/2017
  * _______________________________________________________________________________
  *
  * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
@@ -52,44 +46,29 @@ import org.bukkit.scheduler.BukkitRunnable;
  * including photocopying, recording, or other electronic or mechanical methods, 
  * without the prior written permission of the owner.
  */
-
 @Getter
-public class GameLobby extends BukkitRunnable implements Listener {
+public class GameLobby extends GameLocation {
 
-    private final MinigameFramework plugin;
-    private final GameManager gameManager;
-    private final Minigame minigame;
-    private final TarkanLobbyScoreboard tarkanLobbyScoreboard;
     private final PlatformBuilder platformBuilder = new PlatformBuilder();
     private final BossBarAnnouncer bar = new BossBarAnnouncer(MinigameMessages.BOSS_BAR_LOBBY_MESSAGE.toString());
     private final Location spawn = new Location(Bukkit.getWorld("mg-lobby"), 0.5, 101, 0.5);
     private final int maxCountdown = 30;
     private final boolean showDebug = true;
+    private TarkanLobbyScoreboard tarkanLobbyScoreboard;
     private DoubleJump doubleJump;
     private TipAnnouncer tipAnnouncer;
     private KitManager kitManager;
     private TeamManager teamManager;
-    private boolean cancelTask = false;
     private boolean countdownStarted = false;
     @Setter
     private int countdown = maxCountdown;
-    private TeleportFix2 teleportFix2 = new TeleportFix2();
     private ProfessionToggle professionToggle;
 
-    GameLobby(MinigameFramework plugin, GameManager gameManager, Minigame minigame) {
-        this.plugin = plugin;
-        this.gameManager = gameManager;
-        this.minigame = minigame;
-        tarkanLobbyScoreboard = new TarkanLobbyScoreboard(plugin, gameManager, this);
+    @Override
+    public void setupGameLocation() {
+        // Initialize needed classes
+        tarkanLobbyScoreboard = new TarkanLobbyScoreboard();
         doubleJump = new DoubleJump(plugin.getSpigotCore());
-        professionToggle = new ProfessionToggle(plugin.getSpigotCore());
-    }
-
-    /**
-     * This will setup a lobby for the supplied minigame.
-     */
-    void setupLobby() {
-        ColorLogger.INFO.printLog(showDebug, "GameLobby - setupLobby()");
 
         // Kit Setup
         kitManager = new KitManager(plugin, gameManager, platformBuilder, minigame.getKits(), minigame.getLobbyWorld());
@@ -106,20 +85,22 @@ public class GameLobby extends BukkitRunnable implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
         // Enable Professions
+        professionToggle = new ProfessionToggle(plugin.getSpigotCore());
         professionToggle.enableProfessions();
 
         // Set weather
         World world = Bukkit.getWorlds().get(0);
         world.setStorm(false);
         world.setWeatherDuration(0);
+
+        // Start BukkitRunnable thread
+        startCountdown();
     }
 
-    /**
-     * This will remove the lobby from the core world.
-     */
-    void destroyLobby() {
-        ColorLogger.INFO.printLog(showDebug, "GameLobby - destroyLobby()");
-        cancelTask = true;
+    @Override
+    public void destroyGameLocation() {
+        // Destroy previously needed classes
+        stopCountdown();
 
         // Destroy Kit Manager
         kitManager.destroyKits();
@@ -144,87 +125,19 @@ public class GameLobby extends BukkitRunnable implements Listener {
         WeatherChangeEvent.getHandlerList().unregister(this);
     }
 
-    /**
-     * This will setup a player for the lobby display.
-     *
-     * @param player The player we are going to setup.
-     */
-    public void setupPlayer(Player player) {
-        ColorLogger.INFO.printLog(showDebug, "GameLobby - setupPlayer()");
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
-
-        // Set default kit
-        playerMinigameData.setSelectedKit(minigame.getKits().get(0));
-
-        // Set default team
-        teamManager.initPlayer(player);
-
-        // Send the player the boss bar.
-        bar.showBossBar(player);
-
-        // Lets change some player Bukkit/Spigot defaults
-        player.setGameMode(GameMode.SURVIVAL);
-        player.setHealth(20);
-        player.setFoodLevel(20);
-        player.setFireTicks(0);
-
-        // Teleport the player to the main spawn.
-        player.teleport(spawn);
-
-        // Setup player for double jump.
-        doubleJump.setupPlayer(player);
-
-        // Do teleport fix!
-        teleportFix2.fixTeleport(player);
-
-        // Add the scoreboard if the players profile has been loaded in SpigotCore plugin.
-        if (plugin.getSpigotCore().getProfileManager().getProfile(player) != null) tarkanLobbyScoreboard.addPlayer(player);
-    }
-
-    /**
-     * This will remove a player from the lobby setup. The removal
-     * process can happen if they quit the lobby or right before
-     * they are put into a minigame arena.
-     *
-     * @param player The player we will remove.
-     */
-    public void removePlayer(Player player) {
-        ColorLogger.INFO.printLog(showDebug, "GameLobby - removePlayer()");
-        // Remove the scoreboard.
-        tarkanLobbyScoreboard.removePlayer(player);
-
-        // Remove the boss bar.
-        bar.removeBossBar(player);
-
-        // Remove player double jump.
-        doubleJump.removePlayer(player);
-    }
-
-    /**
-     * Here we will do the lobby countdown.
-     */
     @Override
-    public void run() {
-        if (cancelTask) cancel();
-
+    protected void showCountdown() {
         // Update TarkanScoreBoard animation
         tarkanLobbyScoreboard.animateScoreboard();
 
         // Do lobby countdown
-        performLobbyCountdown();
-    }
-
-    /**
-     * This is the lobby countdown.  The countdown will only run if certain conditions
-     * are met. If the countdown is successful, we will start the core.
-     */
-    private void performLobbyCountdown() {
         if (!gameManager.isInLobby()) return;
         if (!gameManager.isCurrentArenaWorldLoaded()) return;
 
         // Do lobby countdown.
-        if (shouldMinigameStart()) {
-            if (!countdownStarted) ColorLogger.INFO.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown started!");
+        if (gameManager.shouldMinigameStart()) {
+            if (!countdownStarted)
+                ColorLogger.INFO.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown started!");
 
             countdownStarted = true;
 
@@ -281,28 +194,6 @@ public class GameLobby extends BukkitRunnable implements Listener {
     }
 
     /**
-     * Helper method to setup all players currently in the lobby.
-     */
-    void setupAllPlayers() {
-        ColorLogger.INFO.printLog(showDebug, "GameLobby - setupAllPlayers()");
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasMetadata("NPC")) return;
-            setupPlayer(player);
-        }
-    }
-
-    /**
-     * Helper method to remove all players currently in the lobby.
-     */
-    void removeAllPlayers() {
-        ColorLogger.INFO.printLog(showDebug, "GameLobby - removeAllPlayers()");
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasMetadata("NPC")) return;
-            removePlayer(player);
-        }
-    }
-
-    /**
      * Called when a player jumps into the void or into a end portal.
      * This will send them back to the main spawn position.
      *
@@ -319,10 +210,6 @@ public class GameLobby extends BukkitRunnable implements Listener {
 
         //Give player potion effect.
         player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 3 * 20, 100));
-    }
-
-    public boolean shouldMinigameStart() {
-        return Bukkit.getOnlinePlayers().size() >= gameManager.getMinPlayersToStartGame();
     }
 
     /**
@@ -416,7 +303,6 @@ public class GameLobby extends BukkitRunnable implements Listener {
     public void onWeatherChange(WeatherChangeEvent event) {
         if (event.toWeatherState()) event.setCancelled(true);
     }
-
 
     @EventHandler
     public void onPlayerTeleport(PlayerPortalEvent event) {

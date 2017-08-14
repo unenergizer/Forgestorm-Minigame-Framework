@@ -1,6 +1,7 @@
-package com.forgestorm.mgf.core.world;
+package com.forgestorm.mgf.util.world;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -30,10 +31,10 @@ import java.util.List;
  * ADDITIONAL CODE:
  * Teleport Fix By: https://gist.github.com/Zidkon/3779464
  */
-public class TeleportFix implements Listener {
+class TeleportFix implements Listener {
 
-    private Server server;
-    private MinigameFramework plugin;
+    private final Server server;
+    private final MinigameFramework plugin;
 
     public TeleportFix(MinigameFramework plugin) {
         this.plugin = plugin;
@@ -79,7 +80,7 @@ public class TeleportFix implements Listener {
         // Hide or show every player to tpedPlayer
         // and hide or show tpedPlayer to every player.
 
-        boolean isSpectator = plugin.getGameManager().getPlayerManager().getPlayerProfileData(tpedPlayer).isSpectator();
+        boolean isSpectator = GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(tpedPlayer).isSpectator();
         for (Player player : players) {
             if (visible) {
                 tpedPlayer.showPlayer(player);

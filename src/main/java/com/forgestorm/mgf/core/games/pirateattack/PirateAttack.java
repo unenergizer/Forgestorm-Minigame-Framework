@@ -1,6 +1,7 @@
 package com.forgestorm.mgf.core.games.pirateattack;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.pirateattack.kits.Pirate;
 import com.forgestorm.mgf.core.kit.Kit;
@@ -47,8 +48,8 @@ import java.util.List;
 public class PirateAttack extends Minigame {
 
     private PirateAmmoSpawn pirateAmmoSpawn;
-    private List<Team> teams = new ArrayList<>();
-    private List<Team> teamsThatDied = new ArrayList<>();
+    private final List<Team> teams = new ArrayList<>();
+    private final List<Team> teamsThatDied = new ArrayList<>();
 
     public PirateAttack(MinigameFramework plugin) {
         super(plugin);
@@ -57,7 +58,7 @@ public class PirateAttack extends Minigame {
     @Override
     public void setupGame() {
         cancelPVE = false;
-        pirateAmmoSpawn = new PirateAmmoSpawn(plugin);
+        pirateAmmoSpawn = new PirateAmmoSpawn();
         pirateAmmoSpawn.runTaskTimer(plugin, 0, 20 * 3);
     }
 
@@ -79,14 +80,20 @@ public class PirateAttack extends Minigame {
     @Override
     public List<String> getGamePlayTips() {
         ArrayList<String> tips = new ArrayList<>();
-        tips.add("Uhh...");
+        tips.add("Lob cannon balls at other players.");
+        tips.add("Run around to avoid cannon balls.");
+        tips.add("If you fall in water you will start to drown!");
+        tips.add("Last team alive wins!");
         return tips;
     }
 
     @Override
     public List<String> getGamePlayRules() {
         ArrayList<String> rules = new ArrayList<>();
-        rules.add("Do not get blown up.");
+        rules.add("Lob cannon balls at other players.");
+        rules.add("Run around to avoid cannon balls.");
+        rules.add("If you fall in water you will start to drown!");
+        rules.add("Last team alive wins!");
         return rules;
     }
 
@@ -133,7 +140,7 @@ public class PirateAttack extends Minigame {
         if (!(projectile.getShooter() instanceof Player)) return;
         Player player = (Player) projectile.getShooter();
 
-        PlayerMinigameData playerMinigameData = plugin.getGameManager().getPlayerManager().getPlayerProfileData(player);
+        PlayerMinigameData playerMinigameData = GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(player);
 
         if (playerMinigameData.isSpectator()) return;
 
@@ -222,6 +229,9 @@ public class PirateAttack extends Minigame {
         // kill off the player
         Team team = getPlayerMinigameData(player).getSelectedTeam();
         killPlayer(player);
+
+        // Prevent duplicate remove
+        if (team == null || !team.getTeamPlayers().contains(player)) return;
 
         // Get team results
         if (team.getDeadPlayers().size() == team.getTeamPlayers().size()) {

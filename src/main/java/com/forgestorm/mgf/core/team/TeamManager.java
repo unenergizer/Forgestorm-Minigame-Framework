@@ -27,7 +27,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -121,8 +120,7 @@ public class TeamManager implements Listener {
         platformBuilder.clearPlatform(lobbyWorld, pedestalLocations);
 
         // Remove Holograms
-        Iterator<Hologram> hologramIterator = teamHolograms.values().iterator();
-        while (hologramIterator.hasNext()) hologramIterator.next().removeHolograms();
+        for (Hologram hologram : teamHolograms.values()) hologram.removeHolograms();
         teamHolograms.clear();
 
         // Unregister Listeners
@@ -148,12 +146,12 @@ public class TeamManager implements Listener {
      * @param player The player to setup.
      */
     public void initPlayer(Player player) {
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
         Team smallestTeam = null;
         Team teamToJoin = null;
 
         for (Team team : teamsList) {
-            // Try to join empty team first.
+            // Try to enter empty team first.
             if (team.getTeamPlayers().size() == 0) {
                 teamToJoin = team;
                 break;
@@ -175,7 +173,7 @@ public class TeamManager implements Listener {
         teamToJoin.getTeamPlayers().add(player);
         playerMinigameData.setSelectedTeam(teamToJoin);
 
-        // Team join message.
+        // Team enter message.
         player.sendMessage("");
         player.sendMessage(ChatColor.GREEN + "You have joined the " +
                 teamToJoin.getTeamColor() + ChatColor.BOLD + teamToJoin.getTeamName() + ChatColor.GREEN + " team.");
@@ -193,7 +191,7 @@ public class TeamManager implements Listener {
     private void toggleTeamInteract(Player player, Entity entity) {
         if (!teamEntities.containsKey(entity)) return;
 
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
         Team clickedTeam = teamEntities.get(entity);
         Team currentTeam = playerMinigameData.getSelectedTeam();
         Team queuedTeam = playerMinigameData.getQueuedTeam();
@@ -252,13 +250,13 @@ public class TeamManager implements Listener {
      * will add them to a teams queue.
      *
      * @param player The player who wants to switch teams.
-     * @param team   The team the player wants to join.
+     * @param team   The team the player wants to enter.
      */
     private void joinTeam(Player player, Team team) {
         // Update any current queues!
         updateTeamJoinQueues();
 
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
         Team lastTeam = playerMinigameData.getSelectedTeam();
         Team lastQueuedTeam = playerMinigameData.getQueuedTeam();
 
@@ -277,7 +275,7 @@ public class TeamManager implements Listener {
             team.getTeamPlayers().add(player);
             playerMinigameData.setSelectedTeam(team);
 
-            // Team join message.
+            // Team enter message.
             player.sendMessage("");
             player.sendMessage(ChatColor.GREEN + "You have joined the " +
                     team.getTeamColor() + ChatColor.BOLD + team.getTeamName() + ChatColor.GREEN + " team.");
@@ -300,7 +298,7 @@ public class TeamManager implements Listener {
     }
 
     public void playerQuit(Player player) {
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
 
         // Remove player from team list.
         if (playerMinigameData.getSelectedTeam() != null) {
@@ -332,7 +330,7 @@ public class TeamManager implements Listener {
             if (team.getTeamPlayers().size() < team.getTeamSizes()) {
 
                 Player player = team.getQueuedPlayers().remove(); // Grabs next queued player
-                PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+                PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
 
                 // Remove queue team
                 playerMinigameData.setQueuedTeam(null);
@@ -341,7 +339,7 @@ public class TeamManager implements Listener {
                 team.getTeamPlayers().add(player);
                 playerMinigameData.setSelectedTeam(team);
 
-                // Team join message.
+                // Team enter message.
                 player.sendMessage("");
                 player.sendMessage(ChatColor.GREEN + "You have joined the " +
                         team.getTeamColor() + ChatColor.BOLD + team.getTeamName() + ChatColor.GREEN + " team.");
@@ -350,7 +348,7 @@ public class TeamManager implements Listener {
     }
 
     /**
-     * Update holograms after a queue update or a team join.
+     * Update holograms after a queue update or a team enter.
      */
     private void updateHolograms() {
         // Run name change one tick later to fix strange bug.

@@ -19,7 +19,7 @@ import org.bukkit.World;
  * without the prior written permission of the owner.
  */
 
-public class LocationUtil {
+class LocationUtil {
 
     public static Location getCenterLocation(Location loc1, Location loc2) {
 

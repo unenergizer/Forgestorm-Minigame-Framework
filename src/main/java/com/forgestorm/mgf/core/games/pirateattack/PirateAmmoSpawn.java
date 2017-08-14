@@ -1,6 +1,6 @@
 package com.forgestorm.mgf.core.games.pirateattack;
 
-import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.spigotcore.util.item.ItemBuilder;
 import org.bukkit.Bukkit;
@@ -26,47 +26,35 @@ import org.bukkit.scheduler.BukkitRunnable;
  * without the prior written permission of the owner.
  */
 
-public class PirateAmmoSpawn extends BukkitRunnable {
-
-    private final MinigameFramework plugin;
-
-    PirateAmmoSpawn(MinigameFramework plugin) {
-        this.plugin = plugin;
-    }
+class PirateAmmoSpawn extends BukkitRunnable {
 
     @Override
     public void run() {
         for (Player player : Bukkit.getOnlinePlayers()) {
-            PlayerMinigameData playerMinigameData = plugin.getGameManager().getPlayerManager().getPlayerProfileData(player);
+            PlayerMinigameData playerMinigameData = GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(player);
             if (playerMinigameData == null) return;
             if (playerMinigameData.isSpectator()) return;
-            checkAmmo(player, Material.SNOW_BALL);
-//            // Team 1
-//            if (playerMinigameData.getSelectedTeam().getIndex() == 0) checkAmmo(player, Material.SNOW_BALL);
-//
-//            // Team 2
-//            if (playerMinigameData.getSelectedTeam().getIndex() == 1) checkAmmo(player, Material.ENDER_PEARL);
+            checkAmmo(player);
         }
     }
 
     /**
      * This will check to see if the player needs ammo. If they do, we will add it.
+     *  @param player   The player who we are checking.
      *
-     * @param player   The player who we are checking.
-     * @param material The type of ammo to check for and add.
      */
-    private void checkAmmo(Player player, Material material) {
+    private void checkAmmo(Player player) {
         int ammo = 0;
 
         // Find ammo.
         for (ItemStack item : player.getInventory()) {
-            if (item != null && item.getType() != null && item.getType() == material) {
+            if (item != null && item.getType() != null && item.getType() == Material.SNOW_BALL) {
                 ammo += item.getAmount();
             }
         }
 
         // Add ammo.
         if (ammo < 3) player.getInventory().setItem(0,
-                new ItemBuilder(material).setTitle(ChatColor.YELLOW + "Pirate Ammo").setAmount(ammo + 1).build(true));
+                new ItemBuilder(Material.SNOW_BALL).setTitle(ChatColor.YELLOW + "Cannon Balls").setAmount(ammo + 1).build(true));
     }
 }

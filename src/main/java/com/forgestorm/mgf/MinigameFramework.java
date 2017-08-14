@@ -32,15 +32,15 @@ public class MinigameFramework extends JavaPlugin {
     
     @SuppressWarnings("unchecked")
     private final List<String> configGameList = (List<String>) getConfig().getList("Games");
-    private TitleManagerAPI titleManagerAPI = (TitleManagerAPI) Bukkit.getServer().getPluginManager().getPlugin("TitleManager");
-    private SpigotCore spigotCore = (SpigotCore) Bukkit.getServer().getPluginManager().getPlugin("FS-SpigotCore");
+    private final TitleManagerAPI titleManagerAPI = (TitleManagerAPI) Bukkit.getServer().getPluginManager().getPlugin("TitleManager");
+    private final SpigotCore spigotCore = (SpigotCore) Bukkit.getServer().getPluginManager().getPlugin("FS-SpigotCore");
     private GameManager gameManager;
 
     @Override
     public void onEnable() {
         // Begin Game Framework Load
-        gameManager = new GameManager(this);
-        gameManager.runTaskTimer(this, 0, 20);
+        gameManager = GameManager.getInstance();
+        gameManager.setup(this);
 
         registerCommands();
     }

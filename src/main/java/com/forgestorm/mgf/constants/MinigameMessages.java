@@ -39,7 +39,7 @@ public enum MinigameMessages {
     COMMAND_ADMIN_FORCE_START_ERROR_03("&cThe game is already about to start."),
 	
 	//Team MinigameMessages
-	TEAM_QUEUE_PLACED("&eYou were placed in a queue to join this team."),
+	TEAM_QUEUE_PLACED("&eYou were placed in a queue to enter this team."),
 	TEAM_QUEUE_ALREADY_PLACED("&cYou are already queued for this team!"),
 	TEAM_ALREADY_ON_TEAM("&7(you are on this team)"),
 	TEAM_ALREADY_ON_QUEUE("&7(you are queued for this team)"),
@@ -87,7 +87,7 @@ public enum MinigameMessages {
 	MENU_ITEM_SPECTATOR_SPEED_3("&eSpeed 3"),
 	MENU_ITEM_SPECTATOR_SPEED_4("&eSpeed 4");
 	
-	private String message;
+	private final String message;
 	
 	//Constructor
 	MinigameMessages(String message) {

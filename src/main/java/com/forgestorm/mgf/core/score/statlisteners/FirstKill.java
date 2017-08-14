@@ -1,6 +1,7 @@
 package com.forgestorm.mgf.core.score.statlisteners;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.score.StatType;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -26,13 +27,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 
 public class FirstKill implements StatListener {
 
-    @SuppressWarnings("unused")
-    private MinigameFramework plugin;
-    @SuppressWarnings("unused")
     private boolean firstKillRegistered = false;
 
     public FirstKill(MinigameFramework plugin) {
-        this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -45,7 +42,7 @@ public class FirstKill implements StatListener {
         Player defender = (Player) event.getEntity();
         if (defender.getHealth() < 20) {
             firstKillRegistered = true;
-            plugin.getGameManager().getScoreManager().addStat(StatType.FIRST_KILL, damager);
+            GameManager.getInstance().getStatManager().addStat(StatType.FIRST_KILL, damager);
             Bukkit.broadcastMessage(ChatColor.YELLOW + damager.getName() + " got the first kill!");
         }
     }

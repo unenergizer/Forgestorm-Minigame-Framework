@@ -9,15 +9,12 @@ import com.forgestorm.mgf.core.winmanagement.winevents.LastTeamStandingWinEvent;
 import com.forgestorm.mgf.core.winmanagement.winevents.TeamTopScoreWinEvent;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 /*********************************************************************************
  *
@@ -37,13 +34,11 @@ import java.util.Map;
 
 public class WinManager implements Listener {
 
-    private final MinigameFramework plugin;
     private final Minigame minigame;
     @Getter
-    private List<String> scoreMessages = new ArrayList<>();
+    private final List<String> scoreMessages = new ArrayList<>();
 
     public WinManager(MinigameFramework plugin, Minigame minigame) {
-        this.plugin = plugin;
         this.minigame = minigame;
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
@@ -71,10 +66,8 @@ public class WinManager implements Listener {
     @EventHandler
     public void individualTopScores(IndividualTopScoreWinEvent event) {
 
-        // TODO: do something
+        setScoreMessages(new String[] {event.getPlayerScoreMap().toString()});
 
-        // showScores specific to this type of event)
-        // minigame.endGame();
         endMinigame();
     }
 
@@ -96,53 +89,5 @@ public class WinManager implements Listener {
         setScoreMessages(new String[] {event.getTeams().get(0).getTeamName(), event.getTeams().get(1).getTeamName()});
 
         endMinigame();
-    }
-
-//    /**
-//     * Generate a list of the top performing players for end game scores.
-//     *
-//     * @param statType The stat type used to reach a end game win condition.
-//     */
-//    public Map<Player, Double> generateTopScores(StatType statType) {
-//        // Build easy map for score sorting.
-//        Map<Player, Double> unsortedScores = new HashMap<>();
-//
-//        for (Player player : playerStats.keySet()) {
-//            unsortedScores.put(player, playerStats.get(player).get(statType));
-//        }
-//
-//        // Sort the players scores.
-//        MyComparator comparator = new MyComparator(unsortedScores);
-//        Map<Player, Double> scores = new TreeMap<>(comparator);
-//        scores.putAll(unsortedScores);
-//
-//        return scores;
-//    }
-
-    /**
-     * Code by: Sujan Reddy A
-     * Date: Feb 10 '13 at 6:10
-     * Source: https://stackoverflow.com/a/14795215/2865125
-     * <p>
-     * Modified by: Robert Brown
-     * Date Added: 7/28/2017
-     */
-    class MyComparator implements Comparator<Object> {
-
-        Map<Player, Double> map;
-
-        MyComparator(Map<Player, Double> map) {
-            this.map = map;
-        }
-
-        @SuppressWarnings({"SuspiciousMethodCalls", "NumberEquality"})
-        public int compare(Object o1, Object o2) {
-
-            if (map.get(o2) == map.get(o1)) {
-                return 1;
-            } else {
-                return (map.get(o2)).compareTo(map.get(o1));
-            }
-        }
     }
 }

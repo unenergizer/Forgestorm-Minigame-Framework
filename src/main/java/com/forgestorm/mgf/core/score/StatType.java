@@ -29,7 +29,7 @@ public enum StatType {
     FIRST_KILL(FirstKill.class),
     PICKUP_ITEM(PickupItem.class);
 
-    private Class<? extends StatListener> listener;
+    private final Class<? extends StatListener> listener;
 
     StatType(Class<? extends StatListener> listener) {
         this.listener = listener;

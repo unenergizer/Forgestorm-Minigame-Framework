@@ -3,8 +3,8 @@ package com.forgestorm.mgf.commands;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.ArenaState;
 import com.forgestorm.mgf.constants.MinigameMessages;
-import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.core.location.GameLobby;
 import com.forgestorm.spigotcore.constants.CommonSounds;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -33,11 +33,10 @@ public class Admin implements CommandExecutor {
 
     private static final String ERROR = MinigameMessages.ALERT.toString();
     private final MinigameFramework plugin;
-    private final GameManager gameManager;
+    private final GameManager gameManager = GameManager.getInstance();
 
     public Admin(MinigameFramework plugin) {
         this.plugin = plugin;
-        this.gameManager = plugin.getGameManager();
     }
 
     private static boolean isInteger(String s) {
@@ -72,8 +71,6 @@ public class Admin implements CommandExecutor {
             }
         }
 
-
-
         //Check command args
         if (args.length == 1) {
 
@@ -86,7 +83,7 @@ public class Admin implements CommandExecutor {
                         return false;
                     }
 
-                    if (!gameLobby.shouldMinigameStart()) {
+                    if (!gameManager.shouldMinigameStart()) {
                         commandSender.sendMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_START_ERROR_02.toString());
                         String playerCount = Integer.toString(Bukkit.getOnlinePlayers().size());
                         commandSender.sendMessage(ERROR + ChatColor.AQUA + "Run " + ChatColor.DARK_AQUA +

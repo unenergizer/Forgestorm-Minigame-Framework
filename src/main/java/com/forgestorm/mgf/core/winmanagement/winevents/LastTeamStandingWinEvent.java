@@ -26,7 +26,7 @@ public class LastTeamStandingWinEvent extends Event {
 
     private static final HandlerList handlerList = new HandlerList();
     @Getter
-    private List<Team> teams;
+    private final List<Team> teams;
 
     public LastTeamStandingWinEvent(List<Team> teams) {
         this.teams = teams;

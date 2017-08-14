@@ -1,6 +1,8 @@
 package com.forgestorm.mgf.core.games.sheersheep;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -40,8 +42,8 @@ class SpawnSheep {
     void spawnSheep() {
         Random random = new Random();
         spawnSheep = true;
-        world = Bukkit.getWorld(plugin.getGameManager().getCurrentArenaWorldData().getWorldName());
-
+        world = Bukkit.getWorld(GameManager.getInstance().getCurrentArenaWorldData().getWorldName());
+        ColorLogger.DEBUG.printLog("SpawningSheep!");
         new BukkitRunnable() {
 
             @Override

@@ -2,9 +2,9 @@ package com.forgestorm.mgf.core.scoreboard;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
-import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.location.GameLobby;
 import com.forgestorm.mgf.core.team.Team;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.spigotcore.SpigotCore;
@@ -46,17 +46,16 @@ public class TarkanLobbyScoreboard implements Listener {
     @Getter
     private final TitleManagerAPI titleManagerAPI;
     private final boolean showDebug = true;
-    //private final Animation animation;
     private int gameWaitingAnimate = 1;
 
 
-    public TarkanLobbyScoreboard(MinigameFramework plugin, GameManager gameManager, GameLobby gameLobby) {
-        this.plugin = plugin;
-        this.gameManager = gameManager;
-        this.gameLobby = gameLobby;
+    public TarkanLobbyScoreboard() {
+        gameManager = GameManager.getInstance();
+
+        plugin = GameManager.getInstance().getPlugin();
+        gameLobby = gameManager.getGameLobby();
         spigotCore = plugin.getSpigotCore();
         titleManagerAPI = plugin.getTitleManagerAPI();
-        //animation = titleManagerAPI.getRegisteredAnimations().get("scoreboard-title");
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -79,10 +78,6 @@ public class TarkanLobbyScoreboard implements Listener {
 
         // Set scoreboard title
         titleManagerAPI.setScoreboardTitle(player, SpigotCoreMessages.SCOREBOARD_TITLE.toString());
-
-//        SendableAnimation sendableAnimation = titleManagerAPI.toScoreboardTitleAnimation(animation, player, false);
-//        sendableAnimation.setContinuous(true);
-//        sendableAnimation.start();
     }
 
     /**
@@ -99,7 +94,7 @@ public class TarkanLobbyScoreboard implements Listener {
 
     /**
      * This updates the player counts on peoples scoreboard when
-     * players join or leave the server.
+     * players enter or exit the server.
      *
      * @param currentPlayers The player count to display in the
      *                       scoreboard
@@ -113,7 +108,7 @@ public class TarkanLobbyScoreboard implements Listener {
             String maxPlayers = Integer.toString(gameManager.getMaxPlayersOnline());
 
             // Game status
-            if (gameLobby.shouldMinigameStart()) {
+            if (gameManager.shouldMinigameStart()) {
                 titleManagerAPI.setScoreboardValue(player, 7, MinigameMessages.TSB_STATUS.toString() +
                         MinigameMessages.SB_GAME_STATUS_READY.toString());
             } else {
@@ -165,7 +160,7 @@ public class TarkanLobbyScoreboard implements Listener {
         ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - setBoardData(" + player.getDisplayName() + ")");
 
         PlayerProfileData playerProfileData = spigotCore.getProfileManager().getProfile(player);
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerManager().getPlayerProfileData(player);
+        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
         String gameName = gameManager.getCurrentMinigameType().getFriendlyName();
 
         // Blank line 1
@@ -249,7 +244,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * to begin the initial countdown.
      */
     public void animateScoreboard() {
-        if (gameLobby.shouldMinigameStart() && !shouldAnimate) return;
+        if (gameManager.shouldMinigameStart() && !shouldAnimate) return;
 
         // Update animation frame.
         if (gameWaitingAnimate != 5) {
@@ -287,7 +282,7 @@ public class TarkanLobbyScoreboard implements Listener {
     public void onUpdateScoreboard(UpdateScoreboardEvent event) {
         Player player = event.getPlayer();
 
-        if (gameManager.getPlayerManager().getPlayerProfileData(player).isSpectator()) return;
+        if (gameManager.getPlayerMinigameManager().getPlayerProfileData(player).isSpectator()) return;
         if (titleManagerAPI.hasScoreboard(player)){
             ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - onUpdateScoreboard(" + player.getDisplayName() + ")");
         }
@@ -299,7 +294,7 @@ public class TarkanLobbyScoreboard implements Listener {
     public void onProfileLoad(ProfileLoadedEvent event) {
         Player player = event.getPlayer();
 
-        if (gameManager.getPlayerManager().getPlayerProfileData(player).isSpectator()) return;
+        if (gameManager.getPlayerMinigameManager().getPlayerProfileData(player).isSpectator()) return;
         if (!titleManagerAPI.hasScoreboard(player)) {
             ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - onProfileLoad(" + player.getDisplayName() + ")");
         }

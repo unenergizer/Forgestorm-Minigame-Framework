@@ -26,14 +26,14 @@ import java.util.Map;
  * without the prior written permission of the owner.
  */
 
-public class ScoreManager {
+public class StatManager {
 
     private final MinigameFramework plugin;
 
     private final Map<Player, Map<StatType, Double>> playerStats = new HashMap<>();
     private final List<StatListener> statListeners = new ArrayList<>();
 
-    public ScoreManager(MinigameFramework plugin) {
+    public StatManager(MinigameFramework plugin) {
         this.plugin = plugin;
     }
 
@@ -47,6 +47,7 @@ public class ScoreManager {
         // For each player register a statType and default value
         for (Player player : players) {
             Map<StatType, Double> statsForPlayer = new HashMap<>();
+            for (StatType data : statType) statsForPlayer.put(data, 0.0);
             playerStats.put(player, statsForPlayer);
         }
 

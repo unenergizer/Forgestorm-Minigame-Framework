@@ -1,8 +1,11 @@
 package com.forgestorm.mgf.commands;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.GameArena;
-import com.forgestorm.spigotcore.util.logger.ColorLogger;
+import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.core.location.GameArena;
+import com.forgestorm.mgf.core.location.access.ArenaPlayerAccess;
+import com.forgestorm.mgf.core.location.access.ArenaSpectatorAccess;
+import com.forgestorm.mgf.player.PlayerMinigameManager;
 import lombok.AllArgsConstructor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -34,23 +37,25 @@ public class Lobby implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
+            GameManager gameManager = GameManager.getInstance();
 
             // Minigame arena exit.
             // Restore player inventory!!
-            if (!plugin.getGameManager().isInLobby()) {
-                GameArena gameArena = plugin.getGameManager().getGameArena();
+            if (!gameManager.isInLobby()) {
+                GameArena gameArena = gameManager.getGameArena();
+                PlayerMinigameManager playerMinigameManager = gameManager.getPlayerMinigameManager();
 
                 // Check if arena player quit or spectator quit.
-                if (!plugin.getGameManager().getPlayerManager().getPlayerProfileData(player).isSpectator()) {
+                if (!gameManager.getPlayerMinigameManager().getPlayerProfileData(player).isSpectator()) {
                     // Arena player quit
-                    ColorLogger.INFO.printLog("/lobby command ran! " + player.getDisplayName() + " arena quit!");
-                    gameArena.removeArenaPlayer(player, true);
-
+                    gameArena.playerQuit(new ArenaPlayerAccess(), player);
                 } else {
                     // Spectator player quit
-				    gameArena.removeSpectator(player);
-                    ColorLogger.INFO.printLog("/lobby command ran! " + player.getDisplayName() + " spectator quit!");
+                    gameArena.playerQuit(new ArenaSpectatorAccess(), player);
                 }
+
+                // Restore player backup
+                playerMinigameManager.restorePlayerInventoryBackup(player);
             }
 
             // Now teleport to lobby.

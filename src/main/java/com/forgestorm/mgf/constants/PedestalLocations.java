@@ -42,8 +42,11 @@ public enum PedestalLocations {
     TEAM_8(-6, 97, -16, -19.9, 15.5),
     TEAM_9(-4, 97, -17, -12.1, 15.5);
 
-    private int x, y, z;
-    private double yaw, pitch;
+    private final int x;
+    private final int y;
+    private final int z;
+    private final double yaw;
+    private final double pitch;
 
     PedestalLocations(int x, int y, int z, double yaw, double pitch) {
         this.x = x;

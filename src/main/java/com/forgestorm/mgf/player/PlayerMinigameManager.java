@@ -2,9 +2,12 @@ package com.forgestorm.mgf.player;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
-import com.forgestorm.mgf.core.GameArena;
-import com.forgestorm.mgf.core.GameLobby;
 import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.core.location.GameArena;
+import com.forgestorm.mgf.core.location.GameLobby;
+import com.forgestorm.mgf.core.location.access.ArenaPlayerAccess;
+import com.forgestorm.mgf.core.location.access.ArenaSpectatorAccess;
+import com.forgestorm.mgf.core.location.access.LobbyAccess;
 import com.forgestorm.spigotcore.database.ProfileLoadedEvent;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
@@ -34,16 +37,15 @@ import java.util.Map;
  * without the prior written permission of the owner.
  */
 
-public class PlayerManager implements Listener {
+public class PlayerMinigameManager implements Listener {
 
-    private final MinigameFramework plugin;
     private final GameManager gameManager;
     private final Map<Player, PlayerMinigameData> playerProfiles = new HashMap<>();
     private final boolean showDebug = true;
 
-    public PlayerManager(MinigameFramework plugin, GameManager gameManager) {
-        this.plugin = plugin;
-        this.gameManager = gameManager;
+    public PlayerMinigameManager() {
+        gameManager = GameManager.getInstance();
+        MinigameFramework plugin = gameManager.getPlugin();
 
         // Register the PlayerManager event stat listeners.
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -66,6 +68,24 @@ public class PlayerManager implements Listener {
         PlayerJoinEvent.getHandlerList().unregister(this);
         PlayerKickEvent.getHandlerList().unregister(this);
         PlayerQuitEvent.getHandlerList().unregister(this);
+    }
+
+    /**
+     * Called when we need to restore a players inventory backup.
+     *
+     * @param player The player who will get all their inventory items back.
+     */
+    public void restorePlayerInventoryBackup(Player player) {
+        getPlayerProfileData(player).restoreInventoryContents();
+    }
+
+    /**
+     * Called when we need to create a backup of the players inventory.
+     *
+     * @param player The player who's inventory we wills save.
+     */
+    public void makePlayerInventoryBackup(Player player) {
+        getPlayerProfileData(player).backupInventoryContents();
     }
 
     /**
@@ -122,7 +142,7 @@ public class PlayerManager implements Listener {
 
             // Remove from the core lobby.
             GameLobby gameLobby = gameManager.getGameLobby();
-            gameLobby.removePlayer(player);
+            gameLobby.playerQuit(new LobbyAccess(), player);
             gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size() - 1);
             gameLobby.getTeamManager().playerQuit(player);
 
@@ -149,7 +169,7 @@ public class PlayerManager implements Listener {
                 ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Spectator Quit");
 
                 // Remove spectator from the arena.
-                gameArena.removeSpectator(player);
+                gameArena.playerQuit(new ArenaSpectatorAccess(), player);
 
                 // Remove profile and save data.
                 removeProfileData(player);
@@ -163,7 +183,7 @@ public class PlayerManager implements Listener {
                 ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Arena Player Quit");
 
                 // Remove the player from the arena.
-                gameArena.removeArenaPlayer(player, true);
+                gameArena.playerQuit(new ArenaPlayerAccess(), player);
 
                 // Remove profile and save data.
                 removeProfileData(player);
@@ -198,7 +218,7 @@ public class PlayerManager implements Listener {
             /// LOBBY JOIN ///
             //////////////////
 
-            // Lobby join message.
+            // Lobby enter message.
             String onlinePlayers = Integer.toString(Bukkit.getOnlinePlayers().size());
             String maxPlayers = Integer.toString(gameManager.getMaxPlayersOnline());
             joinMessage = joinMessage.concat(MinigameMessages.PLAYER_JOIN_LOBBY.toString()
@@ -206,13 +226,13 @@ public class PlayerManager implements Listener {
                     .replace("%f", maxPlayers) // Max Players Allowed
                     .replace("%e", playerName)); // Player Name
 
-            // Show the join message.
+            // Show the enter message.
             event.setJoinMessage(joinMessage);
 
 
             // Setup lobby player.
             GameLobby gameLobby = gameManager.getGameLobby();
-            gameLobby.setupPlayer(player);
+            gameLobby.playerJoin(new LobbyAccess(), player);
             gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
 
         } else {
@@ -221,16 +241,16 @@ public class PlayerManager implements Listener {
             /// SPECTATOR JOIN ///
             //////////////////////
 
-            // Spectator join message.
+            // Spectator enter message.
             joinMessage = joinMessage.concat(MinigameMessages.SPECTATOR_JOIN.toString().replace("%s", playerName));
 
-            // Show the join message.
+            // Show the enter message.
             event.setJoinMessage(joinMessage);
         }
     }
 
     /**
-     * This event was added because when a player would join the server late as a spectator
+     * This event was added because when a player would enter the server late as a spectator
      * their was a bug that would add their inventory late. Thus overwriting the spectator
      * menu items. Then when a minigame was over, the players original inventory was
      * completely wiped.
@@ -246,8 +266,10 @@ public class PlayerManager implements Listener {
         // Run on the next tick to prevent teleport bug.
         PlayerMinigameData playerMinigameData = getPlayerProfileData(player);
         playerMinigameData.backupInventoryContents();
-        gameManager.getGameArena().addSpectator(player, true);
-        gameManager.getGameArena().teleportSpectator(player);
+
+        GameArena gameArena = gameManager.getGameArena();
+        gameArena.playerJoin(new ArenaSpectatorAccess(), player); //.addSpectator(player, true);
+        gameArena.teleportSpectator(player);
     }
 
     /**

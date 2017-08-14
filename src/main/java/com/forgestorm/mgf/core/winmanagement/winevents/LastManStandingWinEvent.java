@@ -26,7 +26,7 @@ import java.util.List;
 public class LastManStandingWinEvent extends Event {
 
     private static final HandlerList handlerList = new HandlerList();
-    private List<Player> players;
+    private final List<Player> players;
 
     public LastManStandingWinEvent(List<Player> players) {
         this.players = players;

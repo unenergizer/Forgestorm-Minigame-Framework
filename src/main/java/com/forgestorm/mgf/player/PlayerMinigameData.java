@@ -45,7 +45,6 @@ public class PlayerMinigameData {
     private Team queuedTeam;
     private boolean isSpectator = false;
     private Location arenaSpawnLocation;
-    private boolean inventoryBackedUp = false;
     private ItemStack[] inventoryContents;
     private ItemStack[] armorContents;
 
@@ -56,7 +55,7 @@ public class PlayerMinigameData {
 
     /**
      * This will temporarily save the players inventory
-     * and armor contents right before they join a
+     * and armor contents right before they enter a
      * minigame.
      */
     public void backupInventoryContents() {
