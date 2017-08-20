@@ -1,18 +1,11 @@
-package com.forgestorm.mgf.core.games.mobmurder.kits;
-
-import com.forgestorm.mgf.core.selectable.kit.Kit;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+package com.forgestorm.mgf.core.selectable.team;
 
 /*********************************************************************************
  *
  * OWNER: Robert Andrew Brown & Joseph Rugh
  * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
  * PROJECT: forgestorm-minigame-framework
- * DATE: 8/6/2017
+ * DATE: 6/2/2017
  * _______________________________________________________________________________
  *
  * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
@@ -23,16 +16,8 @@ import org.bukkit.inventory.ItemStack;
  * without the prior written permission of the owner.
  */
 
-public class MurderKit extends Kit {
-
-    public MurderKit() {
-        super("Slash the Mob", ChatColor.AQUA, EntityType.BLAZE, Material.BEDROCK, new String[] { "This is a dirty kit." });
-    }
-
-    @Override
-    public void giveKit(Player player) {
-        ItemStack sword = new ItemStack(Material.IRON_SWORD);
-
-        player.getInventory().setItem(0, sword);
-    }
+public enum TeamSizes {
+    UNLIMITED,
+    FIXED,
+    SINGLE
 }

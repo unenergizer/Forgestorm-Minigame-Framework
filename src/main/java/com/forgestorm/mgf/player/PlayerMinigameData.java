@@ -1,7 +1,7 @@
 package com.forgestorm.mgf.player;
 
-import com.forgestorm.mgf.core.kit.Kit;
-import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
+import com.forgestorm.mgf.core.selectable.team.Team;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Location;

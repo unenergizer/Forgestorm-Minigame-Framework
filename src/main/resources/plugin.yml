@@ -19,7 +19,7 @@ version: 0.1
 description: ForgeStorm MiniGame Framework
 author: Robert Andrew Brown
 website: http://www.forgestorm.com/
-depend: [TitleManager, FS-SpigotCore]
+depend: [ProtocolLib, LibsDisguises, TitleManager, FS-SpigotCore]
 commands:
    mgadmin:
       aliases: [mga]

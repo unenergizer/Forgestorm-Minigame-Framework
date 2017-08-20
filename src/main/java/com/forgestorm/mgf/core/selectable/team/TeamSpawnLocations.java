@@ -1,4 +1,4 @@
-package com.forgestorm.mgf.core.team;
+package com.forgestorm.mgf.core.selectable.team;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

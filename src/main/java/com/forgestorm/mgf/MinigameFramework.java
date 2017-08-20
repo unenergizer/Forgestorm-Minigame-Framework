@@ -7,6 +7,8 @@ import com.forgestorm.spigotcore.SpigotCore;
 import io.puharesource.mc.titlemanager.api.v2.TitleManagerAPI;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
@@ -38,6 +40,11 @@ public class MinigameFramework extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // Clear world entities. This will remove any unused holograms and other misc. entities.
+        for (Entity entity : Bukkit.getWorlds().get(0).getEntities()) {
+            if (!(entity instanceof Player)) entity.remove();
+        }
+
         // Begin Game Framework Load
         gameManager = GameManager.getInstance();
         gameManager.setup(this);

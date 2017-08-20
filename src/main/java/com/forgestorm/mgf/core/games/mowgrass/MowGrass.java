@@ -3,15 +3,18 @@ package com.forgestorm.mgf.core.games.mowgrass;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.mowgrass.kits.GrassPuncher;
-import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
-import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
+import com.forgestorm.mgf.core.selectable.team.Team;
+import com.forgestorm.spigotcore.util.display.BossBarAnnouncer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
@@ -35,29 +38,35 @@ import java.util.List;
 
 public class MowGrass extends Minigame {
 
+    private final BossBarAnnouncer bossBarAnnouncer = new BossBarAnnouncer("init");
+
     public MowGrass(MinigameFramework plugin) {
         super(plugin);
     }
 
     @Override
     public void setupGame() {
+        for (Player player : Bukkit.getOnlinePlayers()) bossBarAnnouncer.showBossBar(player);
         initGame();
     }
 
     @Override
     public void disableGame() {
-        // TODO: Do game ending code here.
+        BlockBreakEvent.getHandlerList().unregister(this);
+        for (Player player : Bukkit.getOnlinePlayers()) bossBarAnnouncer.removeBossBar(player);
     }
 
     private void initGame() {
         new BukkitRunnable() {
-            int countdown = 30;
+            int countdown = 60;
 
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (player.hasMetadata("NPC")) return;
-                    player.sendMessage("Game ends in: " + countdown + " seconds.");
+                    bossBarAnnouncer.setBossBarTitle(ChatColor.BOLD + "Time left " +
+                            ChatColor.YELLOW + ChatColor.BOLD + countdown +
+                            ChatColor.WHITE + ChatColor.BOLD + " seconds.");
                 }
 
                 if (countdown == 0) {
@@ -93,7 +102,7 @@ public class MowGrass extends Minigame {
                 -1,
                 EntityType.SHEEP,
                 Material.STONE,
-                new String[] {"Cut the grass or your dad's going to be pissed...","So mow that brush you dirty animal!"}));
+                new String[]{"Cut the grass or your dad's going to be pissed...", "So mow that brush you dirty animal!"}));
         return team;
     }
 
@@ -120,5 +129,13 @@ public class MowGrass extends Minigame {
         rules.add("Left-Click the grass to break it.");
         rules.add("The player with the most cut grass wins!!");
         return rules;
+    }
+
+    @EventHandler
+    public void onGrassBreak(BlockBreakEvent event) {
+        if (!event.getBlock().getType().equals(Material.DOUBLE_PLANT)) return;
+        event.setCancelled(false);
+
+        //PLUGIN.getScore().givePoint(event.getPlayer(), 1);
     }
 }

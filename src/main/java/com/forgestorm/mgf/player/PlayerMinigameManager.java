@@ -144,7 +144,6 @@ public class PlayerMinigameManager implements Listener {
             GameLobby gameLobby = gameManager.getGameLobby();
             gameLobby.playerQuit(new LobbyAccess(), player);
             gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size() - 1);
-            gameLobby.getTeamManager().playerQuit(player);
 
             // Remove profile and save data.
             removeProfileData(player);

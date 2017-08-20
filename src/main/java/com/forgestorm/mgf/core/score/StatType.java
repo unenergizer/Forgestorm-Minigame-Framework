@@ -1,7 +1,7 @@
 package com.forgestorm.mgf.core.score;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.games.sheersheep.statlisteners.PickupItem;
+import com.forgestorm.mgf.core.games.sheersheep.statlisteners.PickupWool;
 import com.forgestorm.mgf.core.score.statlisteners.FirstKill;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
 
@@ -27,7 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 public enum StatType {
 
     FIRST_KILL(FirstKill.class),
-    PICKUP_ITEM(PickupItem.class);
+    PICKUP_WOOL(PickupWool.class);
 
     private final Class<? extends StatListener> listener;
 

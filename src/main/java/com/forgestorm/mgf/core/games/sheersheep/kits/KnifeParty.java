@@ -1,6 +1,6 @@
 package com.forgestorm.mgf.core.games.sheersheep.kits;
 
-import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.spigotcore.util.item.ItemBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;

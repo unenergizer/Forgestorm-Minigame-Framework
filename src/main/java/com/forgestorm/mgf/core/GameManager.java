@@ -10,7 +10,7 @@ import com.forgestorm.mgf.core.location.access.ArenaPlayerAccess;
 import com.forgestorm.mgf.core.location.access.ArenaSpectatorAccess;
 import com.forgestorm.mgf.core.location.access.LobbyAccess;
 import com.forgestorm.mgf.core.score.StatManager;
-import com.forgestorm.mgf.core.team.TeamSpawnLocations;
+import com.forgestorm.mgf.core.selectable.team.TeamSpawnLocations;
 import com.forgestorm.mgf.core.world.WorldData;
 import com.forgestorm.mgf.core.world.WorldManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -135,6 +136,7 @@ public class GameManager extends BukkitRunnable {
         // Grab game selected.
         currentMinigameType = GameType.valueOf(plugin.getConfigGameList().get(currentGameIndex));
         currentMinigame = currentMinigameType.getMinigame(plugin);
+        currentMinigame.initMinigameLists();
 
         // Get arena configuration (for loading worlds)
         arenaConfiguration = YamlConfiguration.loadConfiguration(
@@ -213,7 +215,7 @@ public class GameManager extends BukkitRunnable {
                 .filter(player -> !playerMinigameManager.getPlayerProfileData(player).isSpectator())
                 .collect(Collectors.toList());
 
-        statManager.initStats(players, currentMinigame.getStatTypes());
+        statManager.initStats(players, currentMinigame.getStatTypeList());
     }
 
     /**
@@ -226,7 +228,7 @@ public class GameManager extends BukkitRunnable {
     public void endGame(boolean startNewGame) {
         // Disable the lobby and the arena
         clearWorldEntities(currentArenaWorldData.getWorldName());
-        gameArena.destroyGameLocation();
+        if (gameArena != null) gameArena.destroyGameLocation();
 
         // Remove players
         if (inLobby) {
@@ -265,6 +267,10 @@ public class GameManager extends BukkitRunnable {
         // End game and prevent a new game from starting up.
         endGame(false);
 
+        // Disable Game Arena and Game Lobby
+        if (gameArena != null) gameArena.destroyGameLocation();
+        if (gameLobby != null) gameLobby.destroyGameLocation();
+
         // Disable player manager.
         playerMinigameManager.onDisable();
     }
@@ -290,7 +296,11 @@ public class GameManager extends BukkitRunnable {
      * @param worldName The name of the world to clear entities in.
      */
     private void clearWorldEntities(String worldName) {
-        for (Entity entity : Bukkit.getWorld(worldName).getEntities())
+        World world = Bukkit.getWorld(worldName);
+
+        if (world == null) return;
+
+        for (Entity entity : world.getEntities())
             if (!(entity instanceof Player) && !(entity instanceof ArmorStand)) entity.remove();
     }
 

@@ -1,9 +1,9 @@
 package com.forgestorm.mgf.core.location;
 
 import com.forgestorm.mgf.constants.MinigameMessages;
-import com.forgestorm.mgf.core.kit.KitManager;
 import com.forgestorm.mgf.core.scoreboard.TarkanLobbyScoreboard;
-import com.forgestorm.mgf.core.team.TeamManager;
+import com.forgestorm.mgf.core.selectable.kit.KitSelectable;
+import com.forgestorm.mgf.core.selectable.team.TeamSelectable;
 import com.forgestorm.mgf.util.display.TipAnnouncer;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
 import com.forgestorm.spigotcore.player.DoubleJump;
@@ -57,8 +57,8 @@ public class GameLobby extends GameLocation {
     private TarkanLobbyScoreboard tarkanLobbyScoreboard;
     private DoubleJump doubleJump;
     private TipAnnouncer tipAnnouncer;
-    private KitManager kitManager;
-    private TeamManager teamManager;
+    private KitSelectable kitSelectable;
+    private TeamSelectable teamSelectable;
     private boolean countdownStarted = false;
     @Setter
     private int countdown = maxCountdown;
@@ -71,15 +71,15 @@ public class GameLobby extends GameLocation {
         doubleJump = new DoubleJump(plugin.getSpigotCore());
 
         // Kit Setup
-        kitManager = new KitManager(plugin, gameManager, platformBuilder, minigame.getKits(), minigame.getLobbyWorld());
-        kitManager.setupKits();
+        kitSelectable = new KitSelectable(minigame);
+        kitSelectable.onEnable();
 
         // Team Setup
-        teamManager = new TeamManager(plugin, gameManager, platformBuilder, minigame.getTeams(), minigame.getLobbyWorld());
-        teamManager.setupTeams();
+        teamSelectable = new TeamSelectable(minigame);
+        teamSelectable.onEnable();
 
         // Display core tips
-        tipAnnouncer = new TipAnnouncer(plugin, minigame.getGamePlayTips());
+        tipAnnouncer = new TipAnnouncer(plugin, minigame.getGamePlayTipsList());
 
         // Register Listeners
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -103,10 +103,10 @@ public class GameLobby extends GameLocation {
         stopCountdown();
 
         // Destroy Kit Manager
-        kitManager.destroyKits();
+        kitSelectable.onDisable();
 
         // Destroy Team Manager
-        teamManager.destroyTeams();
+        teamSelectable.onDisable();
 
         // Stop core play tips.
         tipAnnouncer.setShowTips(false);

@@ -1,7 +1,7 @@
 package com.forgestorm.mgf.core.world;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.team.TeamSpawnLocations;
+import com.forgestorm.mgf.core.selectable.team.TeamSpawnLocations;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;

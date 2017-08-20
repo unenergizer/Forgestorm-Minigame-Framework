@@ -4,6 +4,7 @@ import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.location.GameArena;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.spigotcore.constants.UserGroup;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -78,6 +79,9 @@ public class ArenaSpectatorAccess implements AccessBehavior {
         player.getInventory().setItem(3, gameArena.getSpectatorServerExit());
         player.getInventory().setItem(4, gameArena.getTrackPlayers());
         player.getInventory().setItem(5, gameArena.getFlySpeed());
+
+        // Give the spectator the spectator scoreboard tag
+        gameManager.getPlugin().getSpigotCore().getScoreboardManager().addPlayer(player, UserGroup.MINIGAME_SPECTATOR);
     }
 
     @Override

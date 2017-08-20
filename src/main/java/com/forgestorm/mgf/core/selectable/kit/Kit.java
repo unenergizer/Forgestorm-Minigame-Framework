@@ -1,11 +1,19 @@
-package com.forgestorm.mgf.core.team;
+package com.forgestorm.mgf.core.selectable.kit;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import org.bukkit.ChatColor;
+import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 
 /*********************************************************************************
  *
  * OWNER: Robert Andrew Brown & Joseph Rugh
  * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
- * PROJECT: forgestorm-minigame-framework
- * DATE: 6/2/2017
+ * PROJECT: forgestorm-mgframework
+ * DATE: 6/1/2017
  * _______________________________________________________________________________
  *
  * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
@@ -16,8 +24,15 @@ package com.forgestorm.mgf.core.team;
  * without the prior written permission of the owner.
  */
 
-public enum TeamSizes {
-    UNLIMITED,
-    FIXED,
-    SINGLE
+@Getter
+@Setter
+@AllArgsConstructor
+public abstract class Kit {
+    protected String kitName;
+    protected ChatColor kitColor;
+    protected EntityType kitEntityType;
+    protected Material kitPlatformMaterials;
+    protected String[] kitDescription;
+
+    public abstract void giveKit(Player player);
 }

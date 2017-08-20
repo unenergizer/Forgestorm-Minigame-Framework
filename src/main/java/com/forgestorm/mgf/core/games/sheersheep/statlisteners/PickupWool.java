@@ -27,9 +27,9 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
  * without the prior written permission of the owner.
  */
 
-public class PickupItem implements StatListener {
+public class PickupWool implements StatListener {
 
-    public PickupItem(MinigameFramework plugin) {
+    public PickupWool(MinigameFramework plugin) {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -44,7 +44,7 @@ public class PickupItem implements StatListener {
         event.setCancelled(false);
         Player player = event.getPlayer();
         int amount = event.getItem().getItemStack().getAmount();
-        GameManager.getInstance().getStatManager().addStat(StatType.PICKUP_ITEM, player, amount);
+        GameManager.getInstance().getStatManager().addStat(StatType.PICKUP_WOOL, player, amount);
         event.getPlayer().sendMessage(ChatColor.GREEN + "+" + ChatColor.RESET + amount);
     }
 }

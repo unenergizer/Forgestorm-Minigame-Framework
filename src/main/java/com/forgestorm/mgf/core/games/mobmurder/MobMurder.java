@@ -3,11 +3,10 @@ package com.forgestorm.mgf.core.games.mobmurder;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.mobmurder.kits.MurderKit;
-import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
-import com.forgestorm.mgf.core.team.Team;
-import com.forgestorm.mgf.core.winmanagement.winevents.IndividualTopScoreWinEvent;
+import com.forgestorm.mgf.core.selectable.team.Team;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -29,9 +28,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 /*********************************************************************************
@@ -53,11 +50,9 @@ import java.util.Random;
 public class MobMurder extends Minigame {
 
     private final int maxScore = 50;
-    private final Map<Player, Integer> playerScore = new HashMap<>();
     private final List<EntityType> allowedMobs = new ArrayList<>();
     private SpawnMobs spawnMobs;
     private ArenaPointsCounter arenaPointsCounter;
-    private boolean gameOver = false;
     private Random rn = new Random();
 
     public MobMurder(MinigameFramework plugin) {
@@ -73,7 +68,7 @@ public class MobMurder extends Minigame {
         allowedMobs.add(EntityType.SHEEP);
 
         // Setup scoreboard
-        arenaPointsCounter = new ArenaPointsCounter();
+        arenaPointsCounter = new ArenaPointsCounter(maxScore, "Points Collected");
         arenaPointsCounter.addAllPlayers();
 
         // Spawn mobs
@@ -143,33 +138,6 @@ public class MobMurder extends Minigame {
         return scoreData;
     }
 
-    /**
-     * Adds players scores up as the game progresses.
-     *
-     * @param player The player we will add a score for.
-     * @param amount The amount of wool the player picked up.
-     */
-    private void addScore(Player player, int amount) {
-        if (gameOver) return;
-        if (playerScore.containsKey(player)) {
-            int current = playerScore.get(player);
-            int totalScore = amount + current;
-            playerScore.replace(player, amount + current);
-            player.sendMessage(ChatColor.GREEN + "You got a point!");
-
-            // Update the scoreboard.
-            arenaPointsCounter.setBoardData(playerScore);
-
-            if (totalScore >= maxScore) {
-                gameOver = true;
-                Bukkit.getPluginManager().callEvent(new IndividualTopScoreWinEvent(playerScore, "players killed"));
-            }
-        } else {
-            playerScore.put(player, amount);
-        }
-
-    }
-
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player)) return;
@@ -182,7 +150,7 @@ public class MobMurder extends Minigame {
         int randCount = RandomChance.randomInt(1, 5);
 
         if (name.contains("-")) {
-            addScore(player, -5);
+            arenaPointsCounter.addScore(player, -5);
 
             world.spawnParticle(Particle.EXPLOSION_LARGE, loc, 1);
             world.playSound(loc, Sound.ENTITY_SHEEP_DEATH, .7f, .7f);
@@ -211,18 +179,18 @@ public class MobMurder extends Minigame {
         int randCount = RandomChance.randomInt(1, 5);
 
         if (name.contains("+1")) {
-            addScore(player, 1);
+            arenaPointsCounter.addScore(player, 1);
         } else if (name.contains("+2")) {
-            addScore(player, 2);
+            arenaPointsCounter.addScore(player, 2);
 
         } else if (name.contains("+3")) {
-            addScore(player, 3);
+            arenaPointsCounter.addScore(player, 3);
 
         } else if (name.contains("+4")) {
-            addScore(player, 4);
+            arenaPointsCounter.addScore(player, 4);
 
         } else if (name.contains("+5")) {
-            addScore(player, 5);
+            arenaPointsCounter.addScore(player, 5);
         }
 
         //Prevent exp drops.

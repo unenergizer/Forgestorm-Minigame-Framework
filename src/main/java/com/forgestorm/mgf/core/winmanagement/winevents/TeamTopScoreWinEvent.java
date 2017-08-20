@@ -1,6 +1,6 @@
 package com.forgestorm.mgf.core.winmanagement.winevents;
 
-import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.core.selectable.team.Team;
 import com.forgestorm.mgf.core.winmanagement.ScoreData;
 import lombok.Getter;
 import org.bukkit.event.Event;

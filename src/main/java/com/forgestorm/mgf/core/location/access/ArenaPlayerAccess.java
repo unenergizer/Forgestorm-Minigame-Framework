@@ -1,7 +1,7 @@
 package com.forgestorm.mgf.core.location.access;
 
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.core.team.TeamSpawnLocations;
+import com.forgestorm.mgf.core.selectable.team.TeamSpawnLocations;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;

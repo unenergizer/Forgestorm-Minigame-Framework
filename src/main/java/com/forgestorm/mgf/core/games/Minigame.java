@@ -3,9 +3,9 @@ package com.forgestorm.mgf.core.games;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.ArenaState;
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
-import com.forgestorm.mgf.core.team.Team;
+import com.forgestorm.mgf.core.selectable.team.Team;
 import com.forgestorm.mgf.player.PlayerMinigameManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import lombok.Getter;
@@ -47,6 +47,11 @@ import java.util.List;
 public abstract class Minigame implements Listener {
 
     protected final MinigameFramework plugin;
+    private List<String> gamePlayTipsList;
+    private List<String> gamePlayRulesList;
+    private List<Team> teamList;
+    private List<Kit> kitList;
+    private List<StatType> statTypeList;
     // Game options
     protected boolean cancelBlockBreak = true;
     protected boolean cancelBlockPlace = true;
@@ -62,6 +67,17 @@ public abstract class Minigame implements Listener {
         this.plugin = plugin;
     }
 
+    /**
+     * Preinitialize minigame lists.
+     */
+    public void initMinigameLists() {
+        gamePlayTipsList = getGamePlayTips();
+        gamePlayRulesList = getGamePlayRules();
+        teamList = getTeams();
+        kitList = getKits();
+        statTypeList = getStatTypes();
+    }
+
     public void initListeners() {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -72,15 +88,15 @@ public abstract class Minigame implements Listener {
 
     public abstract World getLobbyWorld();
 
-    public abstract List<String> getGamePlayTips();
+    protected abstract List<String> getGamePlayTips();
 
-    public abstract List<String> getGamePlayRules();
+    protected abstract List<String> getGamePlayRules();
 
-    public abstract List<Kit> getKits();
+    protected abstract List<Kit> getKits();
 
-    public abstract List<Team> getTeams();
+    protected abstract List<Team> getTeams();
 
-    public abstract List<StatType> getStatTypes();
+    protected abstract List<StatType> getStatTypes();
 
     public void setupPlayers() {
         PlayerMinigameManager playerMinigameManager = GameManager.getInstance().getPlayerMinigameManager();

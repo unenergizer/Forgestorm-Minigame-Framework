@@ -3,6 +3,7 @@ package com.forgestorm.mgf.core.winmanagement;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.selectable.team.Team;
 import com.forgestorm.mgf.core.winmanagement.winevents.IndividualTopScoreWinEvent;
 import com.forgestorm.mgf.core.winmanagement.winevents.LastManStandingWinEvent;
 import com.forgestorm.mgf.core.winmanagement.winevents.LastTeamStandingWinEvent;
@@ -51,13 +52,13 @@ public class WinManager implements Listener {
         for (String messages : scoreMessages) Bukkit.broadcastMessage(messages);
     }
 
-    private void setScoreMessages(String[] winMessages) {
+    private void setScoreMessages(List<String> winMessages) {
         scoreMessages.add("");
         scoreMessages.add("");
         scoreMessages.add("");
         scoreMessages.add(MinigameMessages.GAME_BAR_SCORES.toString());
         scoreMessages.add("");
-        Collections.addAll(scoreMessages, winMessages);
+        for (String winMessage : winMessages) scoreMessages.add(winMessage);
         scoreMessages.add("");
         scoreMessages.add(MinigameMessages.GAME_BAR_BOTTOM.toString());
         scoreMessages.add("");
@@ -65,29 +66,46 @@ public class WinManager implements Listener {
 
     @EventHandler
     public void individualTopScores(IndividualTopScoreWinEvent event) {
-
-        setScoreMessages(new String[] {event.getPlayerScoreMap().toString()});
+        // TODO: Create friendly end game score list
+        List<String> list = new ArrayList<>();
+        list.add(event.getPlayerScoreMap().toString());
+        setScoreMessages(list);
 
         endMinigame();
     }
 
     @EventHandler
     public void teamTopScores(TeamTopScoreWinEvent event) {
-
+        // TODO: Create friendly end game score list
         endMinigame();
     }
 
     @EventHandler
     public void lastManStanding(LastManStandingWinEvent event) {
-
+        // TODO: Create friendly end game score list
         endMinigame();
     }
 
     @EventHandler
     public void lastTeamStanding(LastTeamStandingWinEvent event) {
+        // Get the winning teams, and reverse the list.
+        List<Team> teamList = event.getTeams();
+        Collections.reverse(teamList);
+        List<String> friendlyScoreList = new ArrayList<>();
 
-        setScoreMessages(new String[] {event.getTeams().get(0).getTeamName(), event.getTeams().get(1).getTeamName()});
+        // Generate top 3 teams
+        int place = 1;
 
+        for (Team team : teamList) {
+            if (place > 3) continue;
+            friendlyScoreList.add(place + ". " + team.getTeamColor() + team.getTeamName());
+            place++;
+        }
+
+        // Set score messages
+        setScoreMessages(friendlyScoreList);
+
+        // End the minigame
         endMinigame();
     }
 }

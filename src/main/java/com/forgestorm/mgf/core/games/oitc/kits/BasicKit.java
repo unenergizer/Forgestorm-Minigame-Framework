@@ -1,6 +1,6 @@
 package com.forgestorm.mgf.core.games.oitc.kits;
 
-import com.forgestorm.mgf.core.kit.Kit;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;

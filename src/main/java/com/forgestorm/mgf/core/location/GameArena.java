@@ -138,7 +138,7 @@ public class GameArena extends GameLocation {
         Bukkit.broadcastMessage("");
 
         //Loop through and show the core rules.
-        for (String gameRule : minigame.getGamePlayRules()) {
+        for (String gameRule : minigame.getGamePlayRulesList()) {
             Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.YELLOW + gameRule));
         }
 
@@ -241,6 +241,10 @@ public class GameArena extends GameLocation {
         PlayerMinigameData playerMinigameData = playerMinigameManager.getPlayerProfileData(player);
         if (playerMinigameData.isSpectator()) return;
 
+        // Heal the player
+        player.setHealth(20);
+        player.setFoodLevel(20);
+
         // Update team info
         playerMinigameData.getSelectedTeam().getDeadPlayers().add(player);
 
@@ -321,7 +325,7 @@ public class GameArena extends GameLocation {
         }.runTaskLater(plugin, 1L);
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDamage(EntityDamageByEntityEvent event) {
         if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
@@ -349,7 +353,7 @@ public class GameArena extends GameLocation {
     /**
      * Prevent spectators from interacting with the environment.
      */
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onSpectatorInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (!playerMinigameManager.getPlayerProfileData(player).isSpectator()) return;

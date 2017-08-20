@@ -1,19 +1,18 @@
-package com.forgestorm.mgf.core.kit;
+package com.forgestorm.mgf.core.games.infection.kits;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 /*********************************************************************************
  *
  * OWNER: Robert Andrew Brown & Joseph Rugh
  * PROGRAMMER: Robert Andrew Brown & Joseph Rugh
- * PROJECT: forgestorm-mgframework
- * DATE: 6/1/2017
+ * PROJECT: forgestorm-minigame-framework
+ * DATE: 8/15/2017
  * _______________________________________________________________________________
  *
  * Copyright © 2017 ForgeStorm.com. All Rights Reserved.
@@ -24,15 +23,19 @@ import org.bukkit.entity.Player;
  * without the prior written permission of the owner.
  */
 
-@Getter
-@Setter
-@AllArgsConstructor
-public abstract class Kit {
-    protected String kitName;
-    protected ChatColor kitColor;
-    protected EntityType kitEntityType;
-    protected Material kitPlatformMaterials;
-    protected String[] kitDescription;
+public class BasicInfectionKit extends Kit {
 
-    public abstract void giveKit(Player player);
+    public BasicInfectionKit() {
+        super(
+                "Infection Kit",
+                ChatColor.RED,
+                EntityType.IRON_GOLEM,
+                Material.STONE,
+                new String[] {"This is the basic infection kit."});
+    }
+
+    @Override
+    public void giveKit(Player player) {
+        player.getInventory().setItem(0, new ItemStack(Material.IRON_SWORD));
+    }
 }

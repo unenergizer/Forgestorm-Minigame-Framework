@@ -4,11 +4,11 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.oitc.kits.BasicKit;
-import com.forgestorm.mgf.core.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
-import com.forgestorm.mgf.core.team.Team;
-import com.forgestorm.mgf.core.winmanagement.winevents.IndividualTopScoreWinEvent;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
+import com.forgestorm.mgf.core.selectable.team.Team;
+import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -19,15 +19,14 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /*********************************************************************************
  *
@@ -48,9 +47,7 @@ import java.util.Map;
 public class OneInTheChamber extends Minigame {
 
     private final int maxScore = 10;
-    private final Map<Player, Integer> playerScore = new HashMap<>();
     private ArenaPointsCounter arenaPointsCounter;
-    private boolean gameOver = false;
 
     public OneInTheChamber(MinigameFramework plugin) {
         super(plugin);
@@ -59,7 +56,7 @@ public class OneInTheChamber extends Minigame {
     @Override
     public void setupGame() {
         cancelPVP = false;
-        arenaPointsCounter = new ArenaPointsCounter();
+        arenaPointsCounter = new ArenaPointsCounter(maxScore, "Players Killed");
         arenaPointsCounter.addAllPlayers();
     }
 
@@ -143,61 +140,42 @@ public class OneInTheChamber extends Minigame {
     }
 
     /**
-     * Adds players scores up as the game progresses.
-     *
-     * @param player The player we will add a score for.
-     * @param amount The amount of wool the player picked up.
-     */
-    private void addScore(Player player, int amount) {
-        if (gameOver) return;
-        if (playerScore.containsKey(player)) {
-            int current = playerScore.get(player);
-            int totalScore = amount + current;
-            playerScore.replace(player, amount + current);
-            player.sendMessage(ChatColor.GREEN + "You got a point!");
-
-            // Update the scoreboard.
-            arenaPointsCounter.setBoardData(playerScore);
-
-            if (totalScore >= maxScore) {
-                gameOver = true;
-                Bukkit.getPluginManager().callEvent(new IndividualTopScoreWinEvent(playerScore, "players killed"));
-            }
-        } else {
-            playerScore.put(player, amount);
-        }
-    }
-
-    /**
      * Respawns a killed player to a random location.
      *
      * @param player The player to respawn.
      */
     private void respawnPlayer(Player player) {
-        List<Location> locationList = GameManager.getInstance().getTeamSpawnLocations().get(0).getLocations();
+        // Heal the player
+        player.setHealth(20);
+        player.setFoodLevel(20);
+
+        // Give Kit Items
+        PlayerMinigameData playerMinigameData = GameManager.getInstance().getPlayerMinigameManager().getPlayerProfileData(player);
+        playerMinigameData.getSelectedKit().giveKit(player);
 
         // Get random location
+        List<Location> locationList = GameManager.getInstance().getTeamSpawnLocations().get(0).getLocations();
         int index = RandomChance.randomInt(1, locationList.size());
 
         // Send player to this random location!
-        player.teleport(locationList.get(index));
+        player.teleport(locationList.get(index - 1));
         player.sendMessage(ChatColor.RED + "You were killed! Sending you to next spawn position.");
     }
 
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
 
         Player player = (Player) event.getEntity();
 
-        if (player.getHealth() - event.getDamage() <= 1 && !(event.getCause().equals(EntityDamageEvent.DamageCause.ENTITY_ATTACK))) {
+        if (player.getHealth() - event.getDamage() <= 1) {
             event.setCancelled(true);
             respawnPlayer(player);
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player)) return;
 
@@ -221,7 +199,7 @@ public class OneInTheChamber extends Minigame {
             event.setCancelled(true);
 
             //Give damager a point.
-            addScore(damager, 1);
+            arenaPointsCounter.addScore(damager, 1);
             giveAmmo(damager);
 
             //Respawn the defender.
@@ -238,7 +216,7 @@ public class OneInTheChamber extends Minigame {
             event.setCancelled(true);
 
             //Give damager a point.
-            addScore(damager, 1);
+            arenaPointsCounter.addScore(damager, 1);
             giveAmmo(damager);
 
             //Respawn the defender.

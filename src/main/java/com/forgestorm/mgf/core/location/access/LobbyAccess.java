@@ -33,10 +33,10 @@ public class LobbyAccess implements AccessBehavior {
         PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
 
         // Set default kit
-        playerMinigameData.setSelectedKit(gameManager.getCurrentMinigame().getKits().get(0));
+        playerMinigameData.setSelectedKit(gameManager.getCurrentMinigame().getKitList().get(0));
 
         // Set default team
-        gameLobby.getTeamManager().initPlayer(player);
+        gameLobby.getTeamSelectable().initPlayer(player);
 
         // Send the player the boss bar.
         gameLobby.getBar().showBossBar(player);

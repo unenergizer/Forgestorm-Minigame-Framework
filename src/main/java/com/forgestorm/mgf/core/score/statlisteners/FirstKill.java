@@ -40,7 +40,7 @@ public class FirstKill implements StatListener {
         if (!(event.getEntity() instanceof Player)) return;
         Player damager = (Player) event.getDamager();
         Player defender = (Player) event.getEntity();
-        if (defender.getHealth() < 20) {
+        if (defender.getHealth() - event.getDamage() <= 1) {
             firstKillRegistered = true;
             GameManager.getInstance().getStatManager().addStat(StatType.FIRST_KILL, damager);
             Bukkit.broadcastMessage(ChatColor.YELLOW + damager.getName() + " got the first kill!");
