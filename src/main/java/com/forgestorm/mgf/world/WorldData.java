@@ -1,4 +1,4 @@
-package com.forgestorm.mgf.core.world;
+package com.forgestorm.mgf.world;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +24,6 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class WorldData {
-    private final int worldIndex; // The index number of the world in the list.
-    private final String worldName; // The file name of the world.
+    private int worldIndex; // The index number of the world in the list.
+    private String worldName; // The file name of the world.
 }

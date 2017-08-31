@@ -1,14 +1,17 @@
 package com.forgestorm.mgf.core.score;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.score.statlisteners.StatListener;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /*********************************************************************************
  *
@@ -29,6 +32,7 @@ import java.util.Map;
 public class StatManager {
 
     private final MinigameFramework plugin;
+    private final GameManager gameManager = GameManager.getInstance();
 
     private final Map<Player, Map<StatType, Double>> playerStats = new HashMap<>();
     private final List<StatListener> statListeners = new ArrayList<>();
@@ -40,10 +44,16 @@ public class StatManager {
     /**
      * Register all stats that the game will listen to during the game play.
      *
-     * @param players  A list of players.
      * @param statType A list of StatTypes to listen to.
      */
-    public void initStats(List<Player> players, List<StatType> statType) {
+    public void initStats(List<StatType> statType) {
+        // Build stat type lists for scores.
+        List<Player> players = Bukkit.getOnlinePlayers().stream()
+                .filter(player -> !player.hasMetadata("NPC"))
+                .filter(player -> !gameManager.getPlayerMinigameManager().getPlayerProfileData(player).isSpectator())
+                .collect(Collectors.toList());
+
+
         // For each player register a statType and default value
         for (Player player : players) {
             Map<StatType, Double> statsForPlayer = new HashMap<>();
@@ -94,7 +104,7 @@ public class StatManager {
      */
     public void updateDatabase() {
         playerStats.forEach((player, stats) ->
-                stats.forEach((statType, amount) -> ColorLogger.DEBUG.printLog(player.getName() + " : " + statType + "=" + amount))
+                stats.forEach((statType, amount) -> ColorLogger.YELLOW.printLog(player.getName() + " : " + statType + "=" + amount))
         );
     }
 }

@@ -1,6 +1,8 @@
 package com.forgestorm.mgf.core.location;
 
 import com.forgestorm.mgf.constants.MinigameMessages;
+import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.core.location.access.LobbyAccess;
 import com.forgestorm.mgf.core.scoreboard.TarkanLobbyScoreboard;
 import com.forgestorm.mgf.core.selectable.kit.KitSelectable;
 import com.forgestorm.mgf.core.selectable.team.TeamSelectable;
@@ -71,15 +73,15 @@ public class GameLobby extends GameLocation {
         doubleJump = new DoubleJump(plugin.getSpigotCore());
 
         // Kit Setup
-        kitSelectable = new KitSelectable(minigame);
+        kitSelectable = new KitSelectable();
         kitSelectable.onEnable();
 
         // Team Setup
-        teamSelectable = new TeamSelectable(minigame);
+        teamSelectable = new TeamSelectable();
         teamSelectable.onEnable();
 
         // Display core tips
-        tipAnnouncer = new TipAnnouncer(plugin, minigame.getGamePlayTipsList());
+        tipAnnouncer = new TipAnnouncer(plugin, GameManager.getInstance().getGameSelector().getMinigame().getGamePlayTipsList());
 
         // Register Listeners
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
@@ -95,6 +97,9 @@ public class GameLobby extends GameLocation {
 
         // Start BukkitRunnable thread
         startCountdown();
+
+        // Setup players
+        allPlayersJoin(new LobbyAccess());
     }
 
     @Override
@@ -113,7 +118,7 @@ public class GameLobby extends GameLocation {
 
         // Test Profession Implementation
         professionToggle.disableProfessions();
-        ColorLogger.INFO.printLog(Boolean.toString(professionToggle.isProfessionsEnabled()));
+        ColorLogger.GREEN.printLog(Boolean.toString(professionToggle.isProfessionsEnabled()));
 
         // Unregister stat listeners
         EntityCombustEvent.getHandlerList().unregister(this);
@@ -123,21 +128,24 @@ public class GameLobby extends GameLocation {
         PlayerDropItemEvent.getHandlerList().unregister(this);
         PlayerTeleportEvent.getHandlerList().unregister(this);
         WeatherChangeEvent.getHandlerList().unregister(this);
+
+        // All players quit
+        allPlayersQuit(new LobbyAccess());
     }
 
     @Override
     protected void showCountdown() {
+
         // Update TarkanScoreBoard animation
         tarkanLobbyScoreboard.animateScoreboard();
 
         // Do lobby countdown
         if (!gameManager.isInLobby()) return;
-        if (!gameManager.isCurrentArenaWorldLoaded()) return;
 
         // Do lobby countdown.
         if (gameManager.shouldMinigameStart()) {
             if (!countdownStarted)
-                ColorLogger.INFO.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown started!");
+                ColorLogger.GREEN.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown started!");
 
             countdownStarted = true;
 
@@ -167,7 +175,7 @@ public class GameLobby extends GameLocation {
 
             countdown--;
         } else if (countdownStarted) {
-            ColorLogger.INFO.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown canceled!");
+            ColorLogger.GREEN.printLog(showDebug, "GameLobby - performLobbyCountdown() -> Countdown canceled!");
 
             // If the countdown message does not equal the maxCountdown time,
             // then it is safe to assume that a countdown started, but then a
@@ -200,7 +208,7 @@ public class GameLobby extends GameLocation {
      * @param player The player to teleport.
      */
     private void sendToSpawn(Player player) {
-        ColorLogger.INFO.printLog(showDebug, "GameLobby - sendToSpawn()");
+        ColorLogger.GREEN.printLog(showDebug, "GameLobby - sendToSpawn()");
         //Teleport the player.
         player.teleport(spawn);
         player.setFallDistance(0F);

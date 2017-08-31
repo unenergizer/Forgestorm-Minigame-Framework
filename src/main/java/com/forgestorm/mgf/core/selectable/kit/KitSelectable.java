@@ -2,7 +2,7 @@ package com.forgestorm.mgf.core.selectable.kit;
 
 import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.constants.PedestalLocations;
-import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.selectable.LobbySelectable;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.mgf.util.world.PedestalMapping;
@@ -38,13 +38,9 @@ public class KitSelectable extends LobbySelectable {
 
     private final Map<LivingEntity, Kit> kitEntities = new HashMap<>();
 
-    public KitSelectable(Minigame minigame) {
-        super(minigame);
-    }
-
     @Override
     public void setup() {
-        List<Kit> kitsList = minigame.getKitList();
+        List<Kit> kitsList = GameManager.getInstance().getGameSelector().getMinigame().getKitList();
 
         // Determine the number of kits and get the center pedestal locations appropriately.
         PedestalMapping pedestalMapping = new PedestalMapping();
@@ -60,7 +56,7 @@ public class KitSelectable extends LobbySelectable {
             pedestalLocations.add(pedLoc);
 
             // Spawn platform
-            platformBuilder.setPlatform(minigame.getLobbyWorld(), pedLoc, kit.getKitPlatformMaterials());
+            platformBuilder.setPlatform(GameManager.getInstance().getGameSelector().getMinigame().getLobbyWorld(), pedLoc, kit.getKitPlatformMaterials());
 
             // Spawn entities
             LivingEntity entity = spawnSelectableEntity(
@@ -85,7 +81,7 @@ public class KitSelectable extends LobbySelectable {
         }
 
         // Remove platforms
-        platformBuilder.clearPlatform(minigame.getLobbyWorld(), pedestalLocations);
+        platformBuilder.clearPlatform(GameManager.getInstance().getGameSelector().getMinigame().getLobbyWorld(), pedestalLocations);
 
         // Clear entity map
         kitEntities.clear();

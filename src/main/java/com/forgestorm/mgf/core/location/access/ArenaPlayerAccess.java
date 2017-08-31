@@ -1,9 +1,8 @@
 package com.forgestorm.mgf.core.location.access;
 
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.core.selectable.team.TeamSpawnLocations;
 import com.forgestorm.mgf.player.PlayerMinigameData;
-import org.bukkit.Location;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 
@@ -28,10 +27,16 @@ public class ArenaPlayerAccess implements AccessBehavior {
     private final GameManager gameManager = GameManager.getInstance();
 
     @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        ColorLogger.DARK_RED.printLog(this.getClass().getSimpleName() + " class object destroyed.");
+    }
+
+    @Override
     public void playerJoin(Player player) {
-        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
-        TeamSpawnLocations teamLocations = gameManager.getTeamSpawnLocations().get(playerMinigameData.getSelectedTeam().getIndex());
-        int lastTeamSpawnIndex = teamLocations.getLastTeamSpawnIndex();
+//        PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
+//        TeamSpawnLocations teamLocations = gameManager.getTeamSpawnLocations().get(playerMinigameData.getSelectedTeam().getIndex());
+//        int lastTeamSpawnIndex = teamLocations.getLastTeamSpawnIndex();
 
         // Clear the inventory
         player.getInventory().clear();
@@ -41,16 +46,16 @@ public class ArenaPlayerAccess implements AccessBehavior {
         player.getInventory().setBoots(null);
 
         // Teleport player
-        Location location = teamLocations.getLocations().get(lastTeamSpawnIndex);
-        player.teleport(location);
-        playerMinigameData.setArenaSpawnLocation(location);
-
-        // Increment teleport counter
-        if (lastTeamSpawnIndex > (teamLocations.getLocations().size() - 1)) {
-            teamLocations.setLastTeamSpawnIndex(0);
-        } else {
-            teamLocations.setLastTeamSpawnIndex(lastTeamSpawnIndex + 1);
-        }
+//        Location location = teamLocations.getLocations().get(lastTeamSpawnIndex);
+//        player.teleport(location);
+//        playerMinigameData.setArenaSpawnLocation(location);
+//
+//        // Increment teleport counter
+//        if (lastTeamSpawnIndex > (teamLocations.getLocations().size() - 1)) {
+//            teamLocations.setLastTeamSpawnIndex(0);
+//        } else {
+//            teamLocations.setLastTeamSpawnIndex(lastTeamSpawnIndex + 1);
+//        }
     }
 
     @Override

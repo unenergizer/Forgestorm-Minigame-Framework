@@ -33,7 +33,7 @@ public class LobbyAccess implements AccessBehavior {
         PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
 
         // Set default kit
-        playerMinigameData.setSelectedKit(gameManager.getCurrentMinigame().getKitList().get(0));
+        playerMinigameData.setSelectedKit(gameManager.getGameSelector().getMinigame().getKitList().get(0));
 
         // Set default team
         gameLobby.getTeamSelectable().initPlayer(player);

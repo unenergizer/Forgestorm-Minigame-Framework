@@ -107,7 +107,7 @@ public class Admin implements CommandExecutor {
                         return false;
                     }
 
-                    gameManager.getCurrentMinigame().endMinigame();
+                    gameManager.getGameSelector().getMinigame().endMinigame();
                     Bukkit.broadcastMessage(ERROR + MinigameMessages.COMMAND_ADMIN_FORCE_STOP.toString());
                     break;
             }

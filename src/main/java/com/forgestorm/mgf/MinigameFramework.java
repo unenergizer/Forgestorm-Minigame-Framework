@@ -3,12 +3,12 @@ package com.forgestorm.mgf;
 import com.forgestorm.mgf.commands.Admin;
 import com.forgestorm.mgf.commands.Lobby;
 import com.forgestorm.mgf.core.GameManager;
+import com.forgestorm.mgf.world.WorldManager;
 import com.forgestorm.spigotcore.SpigotCore;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import io.puharesource.mc.titlemanager.api.v2.TitleManagerAPI;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
@@ -36,26 +36,27 @@ public class MinigameFramework extends JavaPlugin {
     private final List<String> configGameList = (List<String>) getConfig().getList("Games");
     private final TitleManagerAPI titleManagerAPI = (TitleManagerAPI) Bukkit.getServer().getPluginManager().getPlugin("TitleManager");
     private final SpigotCore spigotCore = (SpigotCore) Bukkit.getServer().getPluginManager().getPlugin("FS-SpigotCore");
-    private GameManager gameManager;
 
     @Override
     public void onEnable() {
-        // Clear world entities. This will remove any unused holograms and other misc. entities.
-        for (Entity entity : Bukkit.getWorlds().get(0).getEntities()) {
-            if (!(entity instanceof Player)) entity.remove();
-        }
+        ColorLogger.LIGHT_PURPLE.printLog("STARTING UP MinigameFramework");
 
-        // Begin Game Framework Load
-        gameManager = GameManager.getInstance();
-        gameManager.setup(this);
+        // Load First
+        WorldManager.getInstance().setup(this);
+        ColorLogger.LIGHT_PURPLE.printLog("WorldManager started!!");
 
+        // Load Last
+        GameManager.getInstance().setup(this);
+        ColorLogger.LIGHT_PURPLE.printLog("GameManager started!!");
+
+        // Register commands
         registerCommands();
     }
 
     @Override
     public void onDisable() {
         // Disable the core manager
-        gameManager.onDisable();
+        GameManager.getInstance().onDisable();
     }
 
     private void registerCommands() {

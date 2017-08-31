@@ -138,7 +138,7 @@ public class PlayerMinigameManager implements Listener {
             ///////////////////////////
             //// LOBBY PLAYER QUIT ////
             ///////////////////////////
-            ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Lobby Quit");
+            ColorLogger.GREEN.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Lobby Quit");
 
             // Remove from the core lobby.
             GameLobby gameLobby = gameManager.getGameLobby();
@@ -165,7 +165,7 @@ public class PlayerMinigameManager implements Listener {
                 ////////////////////////
                 //// SPECTATOR QUIT ////
                 ////////////////////////
-                ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Spectator Quit");
+                ColorLogger.GREEN.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Spectator Quit");
 
                 // Remove spectator from the arena.
                 gameArena.playerQuit(new ArenaSpectatorAccess(), player);
@@ -179,7 +179,7 @@ public class PlayerMinigameManager implements Listener {
                 ///////////////////////////
                 //// ARENA PLAYER QUIT ////
                 ///////////////////////////
-                ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Arena Player Quit");
+                ColorLogger.GREEN.printLog(showDebug, "PlayerManager - onPlayerQuit() -> Arena Player Quit");
 
                 // Remove the player from the arena.
                 gameArena.playerQuit(new ArenaPlayerAccess(), player);
@@ -194,6 +194,45 @@ public class PlayerMinigameManager implements Listener {
     }
 
     /**
+     * Here we notify the plugin that a new player has
+     * joined the server. We setup their profile and
+     * place them in the appropriate area (core lobby
+     * or core arena).
+     *
+     * @param event A Bukkit event.
+     */
+    @EventHandler
+    public void onProfileLoad(ProfileLoadedEvent event) {
+        Player player = event.getPlayer();
+
+        if (gameManager.isInLobby()) {
+
+            // Setup lobby player.
+            GameLobby gameLobby = gameManager.getGameLobby();
+            gameLobby.playerJoin(new LobbyAccess(), player);
+            gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
+
+        } else {
+            /*
+            This event was added because when a player would enter the server late as a spectator
+            their was a bug that would add their inventory late. Thus overwriting the spectator
+            menu items. Then when a minigame was over, the players original inventory was
+            completely wiped.
+            */
+            ColorLogger.YELLOW.printLog("Doing spectator specific setup code! :)");
+
+            // Setup spectator player
+            // Run on the next tick to prevent teleport bug.
+            PlayerMinigameData playerMinigameData = getPlayerProfileData(player);
+            playerMinigameData.backupInventoryContents();
+
+            GameArena gameArena = gameManager.getGameArena();
+            gameArena.playerJoin(new ArenaSpectatorAccess(), player); //.addSpectator(player, true);
+            gameArena.teleportSpectator(player);
+        }
+    }
+
+    /**
      * On the PlayerJoinEvent we notify the plugin
      * that a new player has joined the server. From
      * here we setup their profile and place them in
@@ -204,6 +243,7 @@ public class PlayerMinigameManager implements Listener {
      */
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        //public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String playerName = player.getName();
         String joinMessage = "";
@@ -212,10 +252,6 @@ public class PlayerMinigameManager implements Listener {
         createProfile(player);
 
         if (gameManager.isInLobby()) {
-            ColorLogger.INFO.printLog(showDebug, "PlayerManager - onPlayerJoin() -> Lobby Join");
-            //////////////////
-            /// LOBBY JOIN ///
-            //////////////////
 
             // Lobby enter message.
             String onlinePlayers = Integer.toString(Bukkit.getOnlinePlayers().size());
@@ -229,17 +265,7 @@ public class PlayerMinigameManager implements Listener {
             event.setJoinMessage(joinMessage);
 
 
-            // Setup lobby player.
-            GameLobby gameLobby = gameManager.getGameLobby();
-            gameLobby.playerJoin(new LobbyAccess(), player);
-            gameLobby.getTarkanLobbyScoreboard().updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
-
         } else {
-            ColorLogger.INFO.printLog(showDebug, "PlayerManager -onPlayerJoin() -> Spectator Join");
-            //////////////////////
-            /// SPECTATOR JOIN ///
-            //////////////////////
-
             // Spectator enter message.
             joinMessage = joinMessage.concat(MinigameMessages.SPECTATOR_JOIN.toString().replace("%s", playerName));
 
@@ -248,28 +274,28 @@ public class PlayerMinigameManager implements Listener {
         }
     }
 
-    /**
-     * This event was added because when a player would enter the server late as a spectator
-     * their was a bug that would add their inventory late. Thus overwriting the spectator
-     * menu items. Then when a minigame was over, the players original inventory was
-     * completely wiped.
-     */
-    @EventHandler
-    public void onProfileLoad(ProfileLoadedEvent event) {
-        if (gameManager.isInLobby()) return; // Specific setup for spectators only.
-        Player player = event.getPlayer();
-
-        ColorLogger.DEBUG.printLog("Doing spectator specific setup code! :)");
-
-        // Setup spectator player
-        // Run on the next tick to prevent teleport bug.
-        PlayerMinigameData playerMinigameData = getPlayerProfileData(player);
-        playerMinigameData.backupInventoryContents();
-
-        GameArena gameArena = gameManager.getGameArena();
-        gameArena.playerJoin(new ArenaSpectatorAccess(), player); //.addSpectator(player, true);
-        gameArena.teleportSpectator(player);
-    }
+//    /**
+//     * This event was added because when a player would enter the server late as a spectator
+//     * their was a bug that would add their inventory late. Thus overwriting the spectator
+//     * menu items. Then when a minigame was over, the players original inventory was
+//     * completely wiped.
+//     */
+//    @EventHandler
+//    public void onProfileLoad(ProfileLoadedEvent event) {
+//        if (gameManager.isInLobby()) return; // Specific setup for spectators only.
+//        Player player = event.getPlayer();
+//
+//        ColorLogger.YELLOW.printLog("Doing spectator specific setup code! :)");
+//
+//        // Setup spectator player
+//        // Run on the next tick to prevent teleport bug.
+//        PlayerMinigameData playerMinigameData = getPlayerProfileData(player);
+//        playerMinigameData.backupInventoryContents();
+//
+//        GameArena gameArena = gameManager.getGameArena();
+//        gameArena.playerJoin(new ArenaSpectatorAccess(), player); //.addSpectator(player, true);
+//        gameArena.teleportSpectator(player);
+//    }
 
     /**
      * On the PlayerQuitEvent we notify the plugin

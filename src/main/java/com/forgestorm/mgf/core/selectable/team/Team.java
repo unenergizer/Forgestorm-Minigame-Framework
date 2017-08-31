@@ -1,6 +1,5 @@
 package com.forgestorm.mgf.core.selectable.team;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.ChatColor;
@@ -31,11 +30,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Getter
 @Setter
-@AllArgsConstructor
 public class Team {
-    private final List<Player> teamPlayers = new ArrayList<>();
-    private final List<Player> deadPlayers = new ArrayList<>();
-    private final Queue<Player> queuedPlayers = new ConcurrentLinkedQueue<>();
+    private List<Player> teamPlayers = new ArrayList<>();
+    private List<Player> deadPlayers = new ArrayList<>();
+    private Queue<Player> queuedPlayers = new ConcurrentLinkedQueue<>();
 
     private int index; // Represents a team via a number.
     private String teamName;
@@ -44,4 +42,14 @@ public class Team {
     private EntityType teamEntityType;
     private Material teamPlatformMaterials;
     private String[] teamDescription;
+
+    public Team(int index, String teamName, ChatColor teamColor, int teamSizes, EntityType teamEntityType, Material teamPlatformMaterials, String[] teamDescription) {
+        this.index = index;
+        this.teamName = teamName;
+        this.teamColor = teamColor;
+        this.teamSizes = teamSizes;
+        this.teamEntityType = teamEntityType;
+        this.teamPlatformMaterials = teamPlatformMaterials;
+        this.teamDescription = teamDescription;
+    }
 }

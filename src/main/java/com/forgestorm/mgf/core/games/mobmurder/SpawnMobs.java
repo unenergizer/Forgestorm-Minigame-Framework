@@ -2,10 +2,9 @@ package com.forgestorm.mgf.core.games.mobmurder;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameManager;
-import org.bukkit.Bukkit;
+import com.forgestorm.mgf.world.WorldManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
@@ -35,7 +34,6 @@ public class SpawnMobs {
     private static final int MAX_MOB_COUNT = 30;
     private static final int MAX_BAD_MOB_COUNT = 10;
     private final MinigameFramework plugin;
-    private World world = Bukkit.getWorld(GameManager.getInstance().getCurrentArenaWorldData().getWorldName());
     private int goodMobs;
     private int badMobs;
     private boolean cancel = false;
@@ -71,7 +69,7 @@ public class SpawnMobs {
 
     private void spawnMob(boolean badMob) {
         Random generator = new Random();
-        Location location = new Location(world, generator.nextInt(80) - 40, 82, generator.nextInt(80) - 40);
+        Location location = new Location(WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()), generator.nextInt(80) - 40, 82, generator.nextInt(80) - 40);
         String name = "";
 
         int spawnChance = generator.nextInt(100) + 1;
@@ -122,7 +120,7 @@ public class SpawnMobs {
         int positiveMobs = 0;
         int negativeMobs = 0;
 
-        for (LivingEntity entity : world.getLivingEntities()) {
+        for (LivingEntity entity : WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).getLivingEntities()) {
             if (!(entity instanceof Player)) {
                 if (entity.getName().contains("-")) {
                     negativeMobs++;

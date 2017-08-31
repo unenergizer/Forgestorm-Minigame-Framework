@@ -1,12 +1,14 @@
 package com.forgestorm.mgf.core.games.mobmurder;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.mobmurder.kits.MurderKit;
 import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
 import com.forgestorm.mgf.core.selectable.team.Team;
+import com.forgestorm.mgf.world.WorldManager;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -145,19 +147,18 @@ public class MobMurder extends Minigame {
         LivingEntity entity = (LivingEntity) event.getEntity();
         Player player = (Player) event.getDamager();
         String name = entity.getName();
-        World world = entity.getWorld();
         Location loc = entity.getEyeLocation();
         int randCount = RandomChance.randomInt(1, 5);
 
         if (name.contains("-")) {
             arenaPointsCounter.addScore(player, -5);
 
-            world.spawnParticle(Particle.EXPLOSION_LARGE, loc, 1);
-            world.playSound(loc, Sound.ENTITY_SHEEP_DEATH, .7f, .7f);
-            world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, .6f, .5f);
+            WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).spawnParticle(Particle.EXPLOSION_LARGE, loc, 1);
+            WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).playSound(loc, Sound.ENTITY_SHEEP_DEATH, .7f, .7f);
+            WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, .6f, .5f);
 
             for (int i = 0; i <= randCount; i++) {
-                Item item = entity.getWorld().dropItem(loc, new ItemStack(Material.BONE));
+                Item item = WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).dropItem(loc, new ItemStack(Material.BONE));
                 item.setVelocity(new Vector(rn.nextDouble() - 0.5, rn.nextDouble() / 2.0 + 0.3, rn.nextDouble() - 0.5).multiply(0.4));
             }
 
@@ -174,7 +175,7 @@ public class MobMurder extends Minigame {
         LivingEntity entity = event.getEntity();
         Player player = entity.getKiller();
         String name = entity.getName();
-        World world = entity.getWorld();
+        World world = WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData());
         Location loc = entity.getEyeLocation();
         int randCount = RandomChance.randomInt(1, 5);
 

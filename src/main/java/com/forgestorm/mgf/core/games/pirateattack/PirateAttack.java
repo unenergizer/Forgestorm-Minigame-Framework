@@ -4,11 +4,12 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.pirateattack.kits.Pirate;
-import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.selectable.team.Team;
 import com.forgestorm.mgf.core.winmanagement.winevents.LastTeamStandingWinEvent;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.mgf.world.WorldManager;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -113,7 +114,7 @@ public class PirateAttack extends Minigame {
                 "Blue Team",
                 ChatColor.BLUE,
                 8,
-                EntityType.GUARDIAN,
+                EntityType.COW,
                 Material.STONE,
                 new String[]{"Blue team rules!"}));
         teams.add(new Team(
@@ -121,7 +122,7 @@ public class PirateAttack extends Minigame {
                 "Red Team",
                 ChatColor.RED,
                 8,
-                EntityType.COW,
+                EntityType.MUSHROOM_COW,
                 Material.STONE,
                 new String[]{"Red team rocks!"}));
         return teams;
@@ -149,12 +150,12 @@ public class PirateAttack extends Minigame {
 
         if (playerMinigameData.getSelectedTeam().getIndex() == 0) {
             if (projectile.getLocation().getX() > 0) return;
-            projectile.getWorld().createExplosion(projectile.getLocation(), 4);
+            WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).createExplosion(projectile.getLocation(), 4);
         }
 
         if (playerMinigameData.getSelectedTeam().getIndex() == 1) {
             if (projectile.getLocation().getX() < 0) return;
-            projectile.getWorld().createExplosion(projectile.getLocation(), 4);
+            WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).createExplosion(projectile.getLocation(), 4);
         }
     }
 
@@ -167,7 +168,7 @@ public class PirateAttack extends Minigame {
             event.setCancelled(true);
             removePlayerFromGame(player);
 
-            ColorLogger.INFO.printLog("EntityDamageEvent - removePlayerFromGame()");
+            ColorLogger.GREEN.printLog("EntityDamageEvent - removePlayerFromGame()");
         }
     }
 
@@ -181,7 +182,7 @@ public class PirateAttack extends Minigame {
             event.setCancelled(true);
             removePlayerFromGame(player);
 
-            ColorLogger.INFO.printLog("onEntityDamage - removePlayerFromGame()");
+            ColorLogger.GREEN.printLog("onEntityDamage - removePlayerFromGame()");
         }
     }
 
@@ -198,7 +199,7 @@ public class PirateAttack extends Minigame {
         if (player.getHealth() - maxDamage <= 1) {
             removePlayerFromGame(player);
 
-            ColorLogger.INFO.printLog("PlayerMoveEvent - removePlayerFromGame()");
+            ColorLogger.GREEN.printLog("PlayerMoveEvent - removePlayerFromGame()");
         } else {
             player.damage(maxDamage);
         }
@@ -219,12 +220,12 @@ public class PirateAttack extends Minigame {
             event.setCancelled(true);
             removePlayerFromGame(player);
 
-            ColorLogger.INFO.printLog("EntityDamageByBlockEvent - removePlayerFromGame()");
+            ColorLogger.GREEN.printLog("EntityDamageByBlockEvent - removePlayerFromGame()");
         }
     }
 
     private void removePlayerFromGame(Player player) {
-        ColorLogger.FATAL.printLog("removePlayerFromGame");
+        ColorLogger.BLUE.printLog("removePlayerFromGame");
 
         // kill off the player
         Team team = getPlayerMinigameData(player).getSelectedTeam();

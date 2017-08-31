@@ -1,13 +1,15 @@
 package com.forgestorm.mgf.core.games.sheersheep;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.sheersheep.kits.ExplosiveShears;
 import com.forgestorm.mgf.core.games.sheersheep.kits.KnifeParty;
-import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.selectable.team.Team;
+import com.forgestorm.mgf.world.WorldManager;
 import com.forgestorm.spigotcore.util.math.RandomChance;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -141,7 +143,7 @@ public class SheerSheep extends Minigame {
     public void onEntitySheer(PlayerShearEntityEvent event) {
         Sheep sheep = (Sheep) event.getEntity();
         Location sheepEyeLocation = sheep.getEyeLocation();
-        World world = sheep.getWorld();
+        World world = WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData());
         Random rn = new Random();
         int randCount = RandomChance.randomInt(1, 5);
 
@@ -150,7 +152,7 @@ public class SheerSheep extends Minigame {
         world.playSound(sheepEyeLocation, Sound.ENTITY_GENERIC_EXPLODE, .6f, .5f);
 
         for (int i = 0; i <= randCount; i++) {
-            Item item = sheep.getWorld().dropItem(sheepEyeLocation, new ItemStack(Material.BONE));
+            Item item = world.dropItem(sheepEyeLocation, new ItemStack(Material.BONE));
             item.setVelocity(new Vector(rn.nextDouble() - 0.5, rn.nextDouble() / 2.0 + 0.3, rn.nextDouble() - 0.5).multiply(0.4));
         }
 

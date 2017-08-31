@@ -67,7 +67,7 @@ public class TarkanLobbyScoreboard implements Listener {
      */
     public void addPlayer(Player player) {
         if (titleManagerAPI.hasScoreboard(player)) return; // Prevent duplicate scoreboard adds.
-        ColorLogger.DEBUG.printLog(showDebug, "TarkanLobbyScoreboard - addPlayer(" + player.getDisplayName() + ")");
+        ColorLogger.YELLOW.printLog(showDebug, "TarkanLobbyScoreboard - addPlayer(" + player.getDisplayName() + ")");
 
         // Tarkan board setup
         titleManagerAPI.giveScoreboard(player);
@@ -87,7 +87,7 @@ public class TarkanLobbyScoreboard implements Listener {
      */
     public void removePlayer(Player player) {
         if (!titleManagerAPI.hasScoreboard(player)) return;
-        ColorLogger.DEBUG.printLog(showDebug, "TarkanLobbyScoreboard - removePlayer(" + player.getDisplayName() + ")");
+        ColorLogger.YELLOW.printLog(showDebug, "TarkanLobbyScoreboard - removePlayer(" + player.getDisplayName() + ")");
 
         titleManagerAPI.removeScoreboard(player);
     }
@@ -104,7 +104,7 @@ public class TarkanLobbyScoreboard implements Listener {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasMetadata("NPC")) return;
-            ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerCountAndGameStatus(" + player.getDisplayName() + ")");
+            ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerCountAndGameStatus(" + player.getDisplayName() + ")");
             String maxPlayers = Integer.toString(gameManager.getMaxPlayersOnline());
 
             // Game status
@@ -129,7 +129,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param playerMinigameData The players minigame data that contains the new kit they clicked.
      */
     public void updatePlayerKit(Player player, PlayerMinigameData playerMinigameData) {
-        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerKit(" + player.getDisplayName() + ")");
+        ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerKit(" + player.getDisplayName() + ")");
         Kit kit = playerMinigameData.getSelectedKit();
         String kitName = kit.getKitColor() + kit.getKitName();
         titleManagerAPI.setScoreboardValue(player, 11, trimString(MinigameMessages.TSB_KIT.toString() +
@@ -143,7 +143,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * @param playerMinigameData The players minigame data that contains the new team they clicked.
      */
     public void updatePlayerTeam(Player player, PlayerMinigameData playerMinigameData) {
-        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerTeam(" + player.getDisplayName() + ")");
+        ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - updatePlayerTeam(" + player.getDisplayName() + ")");
         Team team = playerMinigameData.getSelectedTeam();
         String teamName = team.getTeamColor() + team.getTeamName();
         titleManagerAPI.setScoreboardValue(player, 10, trimString(MinigameMessages.TSB_TEAM.toString() +
@@ -157,11 +157,11 @@ public class TarkanLobbyScoreboard implements Listener {
      */
     private void setBoardData(Player player) {
         if (!titleManagerAPI.hasScoreboard(player)) return;
-        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - setBoardData(" + player.getDisplayName() + ")");
+        ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - setBoardData(" + player.getDisplayName() + ")");
 
         PlayerProfileData playerProfileData = spigotCore.getProfileManager().getProfile(player);
         PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
-        String gameName = gameManager.getCurrentMinigameType().getFriendlyName();
+        String gameName = gameManager.getGameSelector().getMinigameType().getFriendlyName();
 
         // Blank line 1
         titleManagerAPI.setScoreboardValue(player, 1, SpigotCoreMessages.SCOREBOARD_BLANK_LINE_1.toString());
@@ -223,7 +223,7 @@ public class TarkanLobbyScoreboard implements Listener {
      * @return The trimmed string.
      */
     private String trimString(String input) {
-        ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - trimString()");
+        ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - trimString()");
         final int maxWidth = 42; // Tarkan Scoreboard length is 42.
 
         // Check to see if the input length is greater than the maxWidth of characters.
@@ -259,7 +259,7 @@ public class TarkanLobbyScoreboard implements Listener {
             // Loop through player list and update all players with new animation.
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!titleManagerAPI.hasScoreboard(player)) return;
-                ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - animateScoreboard(" + player.getDisplayName() + ") -> Show countdown");
+                ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - animateScoreboard(" + player.getDisplayName() + ") -> Show countdown");
 
                 // Update game countdown
                 String msg = MinigameMessages.TSB_STATUS.toString() + ChatColor.GREEN + "Starting in " + ChatColor.YELLOW + gameLobby.getCountdown();
@@ -271,7 +271,7 @@ public class TarkanLobbyScoreboard implements Listener {
             // Loop through player list and update all players with new animation.
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (!titleManagerAPI.hasScoreboard(player)) return;
-                ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - animateScoreboard(" + player.getDisplayName() + ") -> Reset countdown");
+                ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - animateScoreboard(" + player.getDisplayName() + ") -> Reset countdown");
 
                 updatePlayerCountAndGameStatus(Bukkit.getOnlinePlayers().size());
             }
@@ -284,7 +284,7 @@ public class TarkanLobbyScoreboard implements Listener {
 
         if (gameManager.getPlayerMinigameManager().getPlayerProfileData(player).isSpectator()) return;
         if (titleManagerAPI.hasScoreboard(player)){
-            ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - onUpdateScoreboard(" + player.getDisplayName() + ")");
+            ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - onUpdateScoreboard(" + player.getDisplayName() + ")");
         }
 
         setBoardData(player);
@@ -296,7 +296,7 @@ public class TarkanLobbyScoreboard implements Listener {
 
         if (gameManager.getPlayerMinigameManager().getPlayerProfileData(player).isSpectator()) return;
         if (!titleManagerAPI.hasScoreboard(player)) {
-            ColorLogger.INFO.printLog(showDebug, "TarkanLobbyScoreboard - onProfileLoad(" + player.getDisplayName() + ")");
+            ColorLogger.GREEN.printLog(showDebug, "TarkanLobbyScoreboard - onProfileLoad(" + player.getDisplayName() + ")");
         }
 
         addPlayer(player);

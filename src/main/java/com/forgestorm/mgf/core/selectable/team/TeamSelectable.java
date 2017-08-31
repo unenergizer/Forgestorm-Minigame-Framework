@@ -2,13 +2,14 @@ package com.forgestorm.mgf.core.selectable.team;
 
 import com.forgestorm.mgf.constants.MinigameMessages;
 import com.forgestorm.mgf.constants.PedestalLocations;
-import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.selectable.LobbySelectable;
 import com.forgestorm.mgf.player.PlayerMinigameData;
 import com.forgestorm.mgf.util.world.PedestalMapping;
 import com.forgestorm.spigotcore.constants.UserGroup;
 import com.forgestorm.spigotcore.database.PlayerProfileData;
 import com.forgestorm.spigotcore.util.display.Hologram;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.util.scoreboard.ScoreboardManager;
 import com.forgestorm.spigotcore.util.text.CenterChatText;
 import com.forgestorm.spigotcore.util.text.ColorMessage;
@@ -50,13 +51,9 @@ public class TeamSelectable extends LobbySelectable {
     private final Map<LivingEntity, Team> teamEntities = new HashMap<>();
     private final Map<Team, Hologram> teamHolograms = new HashMap<>();
 
-    public TeamSelectable(Minigame minigame) {
-        super(minigame);
-    }
-
     @Override
     public void setup() {
-        List<Team> teamsList = minigame.getTeamList();
+        List<Team> teamsList = GameManager.getInstance().getGameSelector().getMinigame().getTeamList();
 
         // Determine the number of teams and get the center pedestal locations appropriately.
         PedestalMapping pedestalMapping = new PedestalMapping();
@@ -72,7 +69,7 @@ public class TeamSelectable extends LobbySelectable {
             pedestalLocations.add(pedLoc);
 
             // Spawn platform
-            platformBuilder.setPlatform(minigame.getLobbyWorld(), pedLoc, team.getTeamPlatformMaterials());
+            platformBuilder.setPlatform(GameManager.getInstance().getGameSelector().getMinigame().getLobbyWorld(), pedLoc, team.getTeamPlatformMaterials());
 
             // Spawn entities
             LivingEntity entity = spawnSelectableEntity(
@@ -86,7 +83,7 @@ public class TeamSelectable extends LobbySelectable {
             teamEntities.put(entity, team);
 
             // Spawn holograms
-            spawnHolograms(team, pedLoc.getLocation(minigame.getLobbyWorld()));
+            spawnHolograms(team, pedLoc.getLocation(GameManager.getInstance().getGameSelector().getMinigame().getLobbyWorld()));
 
             teamsSpawned++;
         }
@@ -102,7 +99,7 @@ public class TeamSelectable extends LobbySelectable {
         }
 
         // Remove platforms
-        platformBuilder.clearPlatform(minigame.getLobbyWorld(), pedestalLocations);
+        platformBuilder.clearPlatform(GameManager.getInstance().getGameSelector().getMinigame().getLobbyWorld(), pedestalLocations);
 
         // Remove Holograms
         for (Hologram hologram : teamHolograms.values()) hologram.removeHolograms();
@@ -234,6 +231,39 @@ public class TeamSelectable extends LobbySelectable {
     }
 
     /**
+     * Updates the players prefix above their head and in the players Tab list.
+     *
+     * @param player The player to set a scoreboard prefix for.
+     * @param team   The team the player is joining.
+     */
+    private void updatePlayerPrefix(Player player, Team team) {
+        ScoreboardManager scoreboardManager = plugin.getSpigotCore().getScoreboardManager();
+        PlayerProfileData playerProfileData = gameManager.getPlugin().getSpigotCore().getProfileManager().getProfile(player);
+
+        // Make sure the scoreboard teamname is unique for the staff player.
+        // This is done because staff can have the free rank (Usergroup 0) but
+        // we want them to have a different tag than an actual free player.
+        String staff = "";
+        if (playerProfileData.isAdmin()) {
+            staff = "A";
+        }
+        if (playerProfileData.isModerator()) {
+            staff = "M";
+        }
+
+        String teamName = ChatColor.stripColor((Integer.toString(playerProfileData.getUserGroup()) + staff + team.getTeamName()).replace(" ", "_"));
+        String teamPrefix = playerProfileData.getPlayerUsergroup().getUserGroupPrefix() + team.getTeamColor();
+
+        // Remove any previous tag
+        scoreboardManager.removePlayer(player);
+
+        // Add them to the new team
+        scoreboardManager.addPlayer(player, teamName, teamPrefix, "");
+
+        ColorLogger.GREEN.printLog("TeamName: " + teamName + ChatColor.RESET + " TeamPrefix: " + teamPrefix + " " + player.getName());
+    }
+
+    /**
      * This will select the players default team.
      *
      * @param player The player to setup.
@@ -243,7 +273,7 @@ public class TeamSelectable extends LobbySelectable {
         Team smallestTeam = null;
         Team teamToJoin = null;
 
-        for (Team team : minigame.getTeamList()) {
+        for (Team team : GameManager.getInstance().getGameSelector().getMinigame().getTeamList()) {
             // Try to enter empty team first.
             if (team.getTeamPlayers().size() == 0) {
                 teamToJoin = team;
@@ -273,6 +303,9 @@ public class TeamSelectable extends LobbySelectable {
         player.sendMessage(ChatColor.GREEN + "You have joined the " +
                 teamToJoin.getTeamColor() + ChatColor.BOLD + teamToJoin.getTeamName() + ChatColor.GREEN + " team.");
 
+        // Update the prefix next to the players name.
+        updatePlayerPrefix(player, teamToJoin);
+
         // Update the holograms
         updateHolograms();
     }
@@ -288,7 +321,6 @@ public class TeamSelectable extends LobbySelectable {
         // Update any current queues!
         updateTeamJoinQueues();
 
-        PlayerProfileData playerProfileData = gameManager.getPlugin().getSpigotCore().getProfileManager().getProfile(player);
         PlayerMinigameData playerMinigameData = gameManager.getPlayerMinigameManager().getPlayerProfileData(player);
         Team lastTeam = playerMinigameData.getSelectedTeam();
         Team lastQueuedTeam = playerMinigameData.getQueuedTeam();
@@ -313,17 +345,6 @@ public class TeamSelectable extends LobbySelectable {
             player.sendMessage(ColorMessage.color("&aYou have joined the " +
                     team.getTeamColor() + "&l" + team.getTeamName() + "&a team."));
 
-            // Change scoreboard prefix/usergroup
-            ScoreboardManager scoreboardManager = plugin.getSpigotCore().getScoreboardManager();
-            scoreboardManager.removePlayer(player);
-
-            String teamName = ChatColor.stripColor((Integer.toString(playerProfileData.getUserGroup()) + team.getTeamName()).replace(" ", "_"));
-            String teamPrefix = playerProfileData.getPlayerUsergroup().getUserGroupPrefix() + team.getTeamColor();
-
-            player.sendMessage("teamName: " + teamName + ChatColor.RESET + "teamPrefix: " + teamPrefix + " " + player.getName());
-
-            scoreboardManager.addPlayer(player, teamName, teamPrefix, "");
-
         } else {
             // Remove from last team queue.
             if (lastQueuedTeam.getQueuedPlayers().contains(player)) lastQueuedTeam.getQueuedPlayers().remove(player);
@@ -338,6 +359,10 @@ public class TeamSelectable extends LobbySelectable {
                     team.getTeamColor() + "&l" + team.getTeamName() + "&e queue."));
         }
 
+        // Update the prefix next to the players name.
+        updatePlayerPrefix(player, team);
+
+        // Update the Holograms above the team entities.
         updateHolograms();
     }
 
@@ -346,7 +371,7 @@ public class TeamSelectable extends LobbySelectable {
      * we will make that happen.
      */
     private void updateTeamJoinQueues() {
-        for (Team team : minigame.getTeamList()) {
+        for (Team team : GameManager.getInstance().getGameSelector().getMinigame().getTeamList()) {
             if (team.getQueuedPlayers().isEmpty()) return;
 
             if (team.getTeamPlayers().size() < team.getTeamSizes()) {
@@ -376,7 +401,7 @@ public class TeamSelectable extends LobbySelectable {
      */
     private void playerQuit(Player player) {
         // Remove the player from team lists.
-        for (Team team : minigame.getTeamList()) {
+        for (Team team : GameManager.getInstance().getGameSelector().getMinigame().getTeamList()) {
             if (team.getTeamPlayers().contains(player)) team.getTeamPlayers().remove(player);
             if (team.getDeadPlayers().contains(player)) team.getDeadPlayers().remove(player);
             if (team.getQueuedPlayers().contains(player)) team.getQueuedPlayers().remove(player);

@@ -70,7 +70,7 @@ public class Infection extends Minigame {
     public void setupGame() {
         // TODO: make sure the zombie didn't quit during game rules countdown
 
-        ColorLogger.ERROR.printLog("INFECTION SETUP CALLED!");
+        ColorLogger.RED.printLog("INFECTION SETUP CALLED!");
 
         // init human map
         getTeamList().get(0).getTeamPlayers().forEach(player -> isHuman.put(player, true));
@@ -78,14 +78,14 @@ public class Infection extends Minigame {
             isHuman.put(player, false); // Add zombie to main map
             playerScoreList.add(player); // Add zombie to score map
             DisguiseAPI.disguiseToAll(player, mobDisguise); // Give player the disguise
-            ColorLogger.FATAL.printLog("Disguising " + player.getName());
+            ColorLogger.BLUE.printLog("Disguising " + player.getName());
         });
 
         // Change some default settings
         cancelBlockBreak = false;
         cancelPVP = false;
 
-        ColorLogger.ERROR.printLog("INFECTION SETUP COMPLETE!");
+        ColorLogger.RED.printLog("INFECTION SETUP COMPLETE!");
 
         // Test to see how many humans and zombies we have.
         int zombies = 0;
@@ -97,7 +97,7 @@ public class Infection extends Minigame {
                 zombies++;
             }
         }
-        ColorLogger.INFO.printLog("Humans: " + humans + " / Zombies: " + zombies);
+        ColorLogger.GREEN.printLog("Humans: " + humans + " / Zombies: " + zombies);
 
         // Add all minecraft door types to the list
         doors.add(Material.ACACIA_DOOR);
@@ -194,7 +194,7 @@ public class Infection extends Minigame {
     private void spawnZombie(Player player) {
         // Find random respawn location
         List<Location> locationList = GameManager.getInstance().getTeamSpawnLocations().get(0).getLocations();
-        int index = RandomChance.randomInt(1, locationList.size());
+        int index = RandomChance.randomInt(1, locationList.size()) - 1;
         player.teleport(locationList.get(index));
 
         // Give the zombie a weapon
@@ -269,36 +269,37 @@ public class Infection extends Minigame {
         // Zombie specific broken materials
         if (!isZombie(event.getPlayer())) return;
 
-        ColorLogger.ERROR.printLog("Zombie broke: " + brokenMaterial.name());
+        ColorLogger.RED.printLog("Zombie broke: " + brokenMaterial.name());
 
         // Let zombies break doors
         if (doors.contains(brokenMaterial)) {
             event.setCancelled(false);
 
-            ColorLogger.ERROR.printLog("Zombie broke a door");
+            ColorLogger.RED.printLog("Zombie broke a door");
         }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (isSpectator(event.getPlayer())) return;
         if (!isZombie(event.getPlayer())) return;
         if (event.getAction() == Action.LEFT_CLICK_BLOCK) return;
         if (event.getClickedBlock() == null) return;
         Material clickedMaterial = event.getClickedBlock().getType();
 
-        ColorLogger.DEBUG.printLog("Zombie is interacting with: " + clickedMaterial);
+        ColorLogger.YELLOW.printLog("Zombie is interacting with: " + clickedMaterial);
 
         // Prevent zombies from opening doors
         if (doors.contains(clickedMaterial)) {
             event.setCancelled(true);
-            ColorLogger.DEBUG.printLog("Zombie is interacting with a door.");
+            ColorLogger.YELLOW.printLog("Zombie is interacting with a door.");
         }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerDamage(EntityDamageEvent event) {
 
-        ColorLogger.FATAL.printLog("EntityDamageEvent EVENT");
+        ColorLogger.BLUE.printLog("EntityDamageEvent EVENT");
         if (event.getEntity() instanceof Player) {
             Player player = (Player) event.getEntity();
 
@@ -314,7 +315,7 @@ public class Infection extends Minigame {
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
 
-        ColorLogger.FATAL.printLog("EntityDamageByEntityEvent EVENT");
+        ColorLogger.BLUE.printLog("EntityDamageByEntityEvent EVENT");
         if (!(event.getDamager() instanceof Player) && !(event.getEntity() instanceof Player)) return;
         if (event.getDamager() instanceof Player && event.getEntity() instanceof Player) {
             Player damager = (Player) event.getDamager();

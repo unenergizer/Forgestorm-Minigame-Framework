@@ -14,9 +14,9 @@
 # without the prior written permission of the owner.
 ##
 Games:
-   - INFECTION
+   #- INFECTION
    #- MOB_MURDER
-   #- OITC
+   - OITC
    - PIRATE_ATTACK
    #- SHEER_SHEEP
    #- MOW_GRASS

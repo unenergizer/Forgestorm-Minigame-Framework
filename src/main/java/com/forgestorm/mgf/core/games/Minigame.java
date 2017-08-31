@@ -3,11 +3,12 @@ package com.forgestorm.mgf.core.games;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.ArenaState;
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.selectable.team.Team;
-import com.forgestorm.mgf.player.PlayerMinigameManager;
 import com.forgestorm.mgf.player.PlayerMinigameData;
+import com.forgestorm.mgf.player.PlayerMinigameManager;
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -65,6 +66,12 @@ public abstract class Minigame implements Listener {
 
     protected Minigame(MinigameFramework plugin) {
         this.plugin = plugin;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        ColorLogger.DARK_RED.printLog("Minigame " + this.getClass().getSimpleName() + " class object destroyed.");
     }
 
     /**
@@ -145,7 +152,7 @@ public abstract class Minigame implements Listener {
      * @param entity The entity we want to check.
      * @return True if the player is a spectator, false otherwise.
      */
-    private boolean isSpectator(Entity entity) {
+    protected boolean isSpectator(Entity entity) {
         return entity instanceof Player && getPlayerMinigameData((Player) entity).isSpectator();
     }
 
@@ -154,7 +161,7 @@ public abstract class Minigame implements Listener {
      * @param player The player we want to check.
      * @return True if the player is a spectator, false otherwise.
      */
-    private boolean isSpectator(Player player) {
+    protected boolean isSpectator(Player player) {
         return getPlayerMinigameData(player).isSpectator();
     }
 

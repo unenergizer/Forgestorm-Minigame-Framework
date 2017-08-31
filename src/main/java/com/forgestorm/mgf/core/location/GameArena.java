@@ -62,7 +62,7 @@ public class GameArena extends GameLocation {
     private final ItemStack flySpeed = new ItemBuilder(Material.MINECART).setTitle(ChatColor.YELLOW + "Move Speed").build(true);
     private final BossBarAnnouncer spectatorBar = new BossBarAnnouncer(MinigameMessages.BOSS_BAR_SPECTATOR_MESSAGE.toString());
     private final int maxCountdown = 11;
-    private final boolean showDebug = true;
+    private final boolean showDebug = false;
     private PlayerMinigameManager playerMinigameManager;
     private WinManager winManager;
     private int countdown = maxCountdown;
@@ -74,22 +74,29 @@ public class GameArena extends GameLocation {
     @Override
     public void setupGameLocation() {
         this.playerMinigameManager = gameManager.getPlayerMinigameManager();
-        this.winManager = new WinManager(plugin, minigame);
+        this.winManager = new WinManager(plugin);
 
         // Register events
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
         // Setup Spectator spawn location
-        spectatorSpawn = gameManager.getWorldManager().getSpectatorLocation(gameManager.getCurrentArenaWorldData(), gameManager.getArenaConfiguration());
+        spectatorSpawn = gameManager.getSpectatorLocation();
 
         // Start BukkitRunnable thread
         startCountdown();
+
+        // Add players and show countdown
+        allPlayersJoin(new ArenaPlayerAccess());
+        showTutorialInfo();
     }
 
     @Override
     public void destroyGameLocation() {
         // Stop Bukkit runnable thread
         stopCountdown();
+
+        // Set to null
+        spectatorSpawn = null;
 
         // Unregister stat listeners
         BlockBreakEvent.getHandlerList().unregister(this);
@@ -117,7 +124,7 @@ public class GameArena extends GameLocation {
                 showScores();
                 break;
             case ARENA_EXIT:
-                minigame.setGameOver(true);
+                gameManager.getGameSelector().getMinigame().setGameOver(true);
                 break;
         }
     }
@@ -128,7 +135,7 @@ public class GameArena extends GameLocation {
      * that is currently loaded and being played.
      */
     public void showTutorialInfo() {
-        ColorLogger.INFO.printLog(showDebug, "GameArena - showTutorialInfo()");
+        ColorLogger.GREEN.printLog(showDebug, "GameArena - showTutorialInfo()");
         arenaState = ArenaState.ARENA_TUTORIAL;
 
         //Show the core rules.
@@ -138,7 +145,7 @@ public class GameArena extends GameLocation {
         Bukkit.broadcastMessage("");
 
         //Loop through and show the core rules.
-        for (String gameRule : minigame.getGamePlayRulesList()) {
+        for (String gameRule : gameManager.getGameSelector().getMinigame().getGamePlayRulesList()) {
             Bukkit.broadcastMessage(CenterChatText.centerChatMessage(ChatColor.YELLOW + gameRule));
         }
 
@@ -150,7 +157,7 @@ public class GameArena extends GameLocation {
      * This is the countdown that is shown after the tutorial is displayed.
      */
     private void showTutorialCountdown() {
-        ColorLogger.INFO.printLog(showDebug, "GameArena - showTutorialCountdown()");
+        ColorLogger.GREEN.printLog(showDebug, "GameArena - showTutorialCountdown()");
         String timeLeft = Integer.toString(countdown);
 
         // Test if the game should end.
@@ -178,9 +185,9 @@ public class GameArena extends GameLocation {
             countdown = maxCountdown;
 
             // Lets start the minigame!
-            minigame.initListeners();
-            minigame.setupGame();
-            minigame.setupPlayers();
+            gameManager.getGameSelector().getMinigame().initListeners();
+            gameManager.getGameSelector().getMinigame().setupGame();
+            gameManager.getGameSelector().getMinigame().setupPlayers();
         }
         countdown--;
     }
@@ -193,7 +200,7 @@ public class GameArena extends GameLocation {
      * @param sound    The sound to play when text is displayed.
      */
     private void tutorialCountdownMessage(String title, String subtitle, Sound sound) {
-        ColorLogger.INFO.printLog(showDebug, "GameArena - tutorialCountdownMessage()");
+        ColorLogger.GREEN.printLog(showDebug, "GameArena - tutorialCountdownMessage()");
         for (Player players : Bukkit.getOnlinePlayers()) {
             if (players.hasMetadata("NPC")) return;
             plugin.getTitleManagerAPI().sendTitles(players, title, subtitle);
@@ -205,7 +212,7 @@ public class GameArena extends GameLocation {
      * After the game play is finished we will show the game scores.
      */
     private void showScores() {
-        ColorLogger.INFO.printLog(showDebug, "GameArena - showScores()");
+        ColorLogger.GREEN.printLog(showDebug, "GameArena - showScores()");
         arenaState = ArenaState.ARENA_SHOW_SCORES;
 
         if (countdown == 10) winManager.printScores();
@@ -364,23 +371,23 @@ public class GameArena extends GameLocation {
             if (event.getItem() == null) return;
             Material material = event.getItem().getType();
 
-            ColorLogger.DEBUG.printLog("Spectator Item Clicked");
+            ColorLogger.YELLOW.printLog("Spectator Item Clicked");
 
             if (material == spectatorServerExit.getType()) {
                 playerQuit(new ArenaSpectatorAccess(), player);
                 plugin.getSpigotCore().getBungeecord().connectToBungeeServer(player, "hub-01");
-                ColorLogger.INFO.printLog("Spectator watch clicked!! " + player.getDisplayName() + " leaving game!!");
-                ColorLogger.DEBUG.printLog("spectatorServerExit");
+                ColorLogger.GREEN.printLog("Spectator watch clicked!! " + player.getDisplayName() + " leaving game!!");
+                ColorLogger.YELLOW.printLog("spectatorServerExit");
             }
 
             if (material == trackPlayers.getType()) {
                 new SpectatorPlayerTracker(plugin).open(player);
-                ColorLogger.DEBUG.printLog("trackPlayers");
+                ColorLogger.YELLOW.printLog("trackPlayers");
             }
 
             if (material == flySpeed.getType()) {
                 new SpectatorFlySpeed(plugin).open(player);
-                ColorLogger.DEBUG.printLog("flySpeed");
+                ColorLogger.YELLOW.printLog("flySpeed");
             }
         }
 
@@ -416,11 +423,11 @@ public class GameArena extends GameLocation {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerKick(PlayerKickEvent event) {
-        if (gameManager.shouldMinigameEnd(event.getPlayer())) minigame.endMinigame();
+        if (gameManager.shouldMinigameEnd(event.getPlayer())) gameManager.getGameSelector().getMinigame().endMinigame();
     }
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        if (gameManager.shouldMinigameEnd(event.getPlayer())) minigame.endMinigame();
+        if (gameManager.shouldMinigameEnd(event.getPlayer())) gameManager.getGameSelector().getMinigame().endMinigame();
     }
 }

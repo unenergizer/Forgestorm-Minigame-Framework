@@ -2,7 +2,6 @@ package com.forgestorm.mgf.core.location;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.location.access.AccessBehavior;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -29,30 +28,32 @@ public abstract class GameLocation extends BukkitRunnable implements Listener {
 
     final GameManager gameManager;
     final MinigameFramework plugin;
-    final Minigame minigame;
+    private boolean running = false;
 
     GameLocation() {
         GameManager gameManager = GameManager.getInstance();
         this.gameManager = gameManager;
         this.plugin = gameManager.getPlugin();
-        this.minigame = gameManager.getCurrentMinigame();
-    }
-
-    public abstract void setupGameLocation();
-    public abstract void destroyGameLocation();
-    protected abstract void showCountdown();
-
-    void startCountdown() {
         this.runTaskTimer(plugin, 0, 20);
     }
 
+    public abstract void setupGameLocation();
+
+    public abstract void destroyGameLocation();
+
+    protected abstract void showCountdown();
+
+    void startCountdown() {
+        running = true;
+    }
+
     void stopCountdown() {
-        cancel();
+        running = false;
     }
 
     @Override
     public void run() {
-        showCountdown();
+        if (running) showCountdown();
     }
 
     /**
@@ -80,7 +81,7 @@ public abstract class GameLocation extends BukkitRunnable implements Listener {
      *
      * @param accessBehavior The type of player join we want to perform.
      */
-    public void allPlayersJoin(AccessBehavior accessBehavior) {
+    void allPlayersJoin(AccessBehavior accessBehavior) {
         for (Player player : Bukkit.getOnlinePlayers()) {
             playerJoin(accessBehavior, player);
         }

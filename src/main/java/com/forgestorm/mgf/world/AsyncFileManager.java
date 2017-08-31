@@ -1,5 +1,6 @@
-package com.forgestorm.mgf.core.world;
+package com.forgestorm.mgf.world;
 
+import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import lombok.Getter;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -180,11 +181,18 @@ class AsyncFileManager extends BukkitRunnable {
      * @param filePath The file or folder that will be deleted.
      */
     private void deleteFolder(String filePath) {
+        ColorLogger.DARK_GREEN.printLog(filePath);
         try {
             Files.walk(Paths.get(filePath))
                     .map(Path::toFile)
                     .sorted((o1, o2) -> -o1.compareTo(o2))
-                    .forEach(File::delete);
+                    .forEach(file -> {
+
+                        if (!file.delete()) {
+                            ColorLogger.DARK_GREEN.printLog(file.getName());
+                        }
+
+                    });
         } catch (IOException e) {
             e.printStackTrace();
         }

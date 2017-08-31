@@ -1,6 +1,7 @@
 package com.forgestorm.mgf.core.games;
 
 import com.forgestorm.mgf.MinigameFramework;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.games.infection.Infection;
 import com.forgestorm.mgf.core.games.mobmurder.MobMurder;
 import com.forgestorm.mgf.core.games.oitc.OneInTheChamber;
@@ -56,12 +57,11 @@ public enum GameType {
     /**
      * Grabs the main core class for a particular minigame.
      *
-     * @param plugin The main instance of this plugin.
      * @return The main core class for the selected minigame.
      */
-    public Minigame getMinigame(MinigameFramework plugin) {
+    public Minigame getMinigame() {
         try {
-            return clazz.getConstructor(MinigameFramework.class).newInstance(plugin);
+            return clazz.getConstructor(MinigameFramework.class).newInstance(GameManager.getInstance().getPlugin());
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             e.printStackTrace();
         }

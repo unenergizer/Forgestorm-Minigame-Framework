@@ -2,7 +2,7 @@ package com.forgestorm.mgf.core.winmanagement;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.MinigameMessages;
-import com.forgestorm.mgf.core.games.Minigame;
+import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.selectable.team.Team;
 import com.forgestorm.mgf.core.winmanagement.winevents.IndividualTopScoreWinEvent;
 import com.forgestorm.mgf.core.winmanagement.winevents.LastManStandingWinEvent;
@@ -35,17 +35,15 @@ import java.util.List;
 
 public class WinManager implements Listener {
 
-    private final Minigame minigame;
     @Getter
     private final List<String> scoreMessages = new ArrayList<>();
 
-    public WinManager(MinigameFramework plugin, Minigame minigame) {
-        this.minigame = minigame;
+    public WinManager(MinigameFramework plugin) {
         Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     private void endMinigame() {
-        minigame.endMinigame();
+        GameManager.getInstance().getGameSelector().getMinigame().endMinigame();
     }
 
     public void printScores() {

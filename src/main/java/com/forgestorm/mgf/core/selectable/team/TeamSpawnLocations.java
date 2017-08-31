@@ -1,7 +1,6 @@
 package com.forgestorm.mgf.core.selectable.team;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.bukkit.Location;
 
@@ -26,9 +25,24 @@ import java.util.List;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 public class TeamSpawnLocations {
     private final int index;
-    private final List<Location> locations;
+    private List<Location> locations;
     private int lastTeamSpawnIndex = 0;
+
+    public TeamSpawnLocations(int index, List<Location> locations) {
+        this.index = index;
+        this.locations = locations;
+    }
+
+    /**
+     * This will remove the Location reference from the loaded arena world. This allows
+     * the arena world to be safely deleted.  Otherwise, files are not removed which
+     * will cause chunk files to be locked by the operating system causing holes to
+     * appear in the map next time it is loaded.
+     */
+    public void disable() {
+        locations.clear();
+        locations = null;
+    }
 }

@@ -3,7 +3,6 @@ package com.forgestorm.mgf.core.selectable;
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.constants.PedestalLocations;
 import com.forgestorm.mgf.core.GameManager;
-import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.util.world.PlatformBuilder;
 import com.forgestorm.spigotcore.constants.UserGroup;
 import org.bukkit.Bukkit;
@@ -41,14 +40,12 @@ public abstract class LobbySelectable implements Listener {
 
     protected final MinigameFramework plugin;
     protected final GameManager gameManager;
-    protected final Minigame minigame;
     protected final PlatformBuilder platformBuilder = new PlatformBuilder();
-    protected final List<PedestalLocations> pedestalLocations = new ArrayList<>();
+    protected List<PedestalLocations> pedestalLocations = new ArrayList<>();
 
-    public LobbySelectable(Minigame minigame) {
+    public LobbySelectable() {
         this.gameManager = GameManager.getInstance();
         this.plugin = gameManager.getPlugin();
-        this.minigame = minigame;
     }
 
     public void onEnable() {
@@ -79,7 +76,7 @@ public abstract class LobbySelectable implements Listener {
      * @return The generated entity.
      */
     protected LivingEntity spawnSelectableEntity(String name, EntityType type, PedestalLocations pedestalLocation, UserGroup userGroup) {
-        World world = minigame.getLobbyWorld();
+        World world = gameManager.getGameSelector().getMinigame().getLobbyWorld();
         Location entityLocation = pedestalLocation.getLocation(world).add(.5, 1.5, .5);
 
         // Generate and spawn the entity.

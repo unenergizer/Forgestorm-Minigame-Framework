@@ -2,9 +2,8 @@ package com.forgestorm.mgf.core.games.sheersheep;
 
 import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameManager;
-import org.bukkit.Bukkit;
+import com.forgestorm.mgf.world.WorldManager;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -32,7 +31,6 @@ public class SpawnSheep {
     private final MinigameFramework plugin;
     private final int maxSheepCount = 30;
     private Random random = new Random();
-    private World world = Bukkit.getWorld(GameManager.getInstance().getCurrentArenaWorldData().getWorldName());
     private boolean cancel = false;
 
     SpawnSheep(MinigameFramework plugin) {
@@ -54,7 +52,7 @@ public class SpawnSheep {
 
                 if (currentSheepCount <= maxSheepCount) {
                     for (int i = 1; i <= maxSheepCount - currentSheepCount; i++) {
-                        Location location = new Location(world, random.nextInt(80) - 40, 82, random.nextInt(80) - 40);
+                        Location location = new Location(WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()), random.nextInt(80) - 40, 82, random.nextInt(80) - 40);
                         location.getWorld().spawnEntity(location, EntityType.SHEEP);
                     }
                 }
@@ -66,7 +64,7 @@ public class SpawnSheep {
     private int getSheepCount() {
         int sheep = 0;
 
-        for (Entity entity : world.getEntities()) {
+        for (Entity entity : WorldManager.getInstance().getWorld(GameManager.getInstance().getCurrentArenaWorldData()).getEntities()) {
             if (entity.getType() == EntityType.SHEEP) {
                 sheep++;
             }
