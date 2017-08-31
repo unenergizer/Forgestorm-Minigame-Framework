@@ -144,9 +144,6 @@ public class WorldManager extends BukkitRunnable {
         // Set main reference of the arena world.
         loadedWorlds.put(worldName, Bukkit.getWorld(worldName));
 
-        // Register arena world load event
-//        Bukkit.getPluginManager().callEvent(new ArenaWorldLoadedEvent(arenaWorld));
-
         //Generate team spawn locations
         GameManager gameManager = GameManager.getInstance();
         gameManager.generateTeamSpawnLocations(gameManager.getCurrentArenaWorldData(), gameManager.getArenaConfiguration());

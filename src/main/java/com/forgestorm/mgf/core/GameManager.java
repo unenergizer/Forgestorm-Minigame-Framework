@@ -89,6 +89,16 @@ public class GameManager extends BukkitRunnable {
     }
 
     /**
+     * Gets the path of the arena configuration file.
+     *
+     * @param worldData The world data needed for the path.
+     * @return A string that contains the YAML configuration path.
+     */
+    private static String getConfigurationPath(WorldData worldData) {
+        return "Worlds." + worldData.getWorldIndex();
+    }
+
+    /**
      * This will setup GameManager for first time use.
      *
      * @param plugin An instance of the main plugin class.
@@ -139,22 +149,32 @@ public class GameManager extends BukkitRunnable {
         // Load arena world
         WorldData worldToLoad = getRandomArenaWorld(arenaConfiguration);
 
-        // If the worldData isn't null and the worldData doesn't equal the current one,
-        // then we will unload the current arena and then load a new one.  We do this
-        // check to make sure the framework isn't unloading and loading a world that
-        // is going to be used again.  While this is rare, we do want to prevent this
-        // error.
-        if (currentArenaWorldData == null) {
-            // An arena world has not been loaded. Lets do that now.
-            WorldManager.getInstance().copyWorld(currentArenaWorldData = worldToLoad);
+        /*
+        NOTE 1: If the worldData isn't null and the worldData doesn't equal the current one,
+        then we will unload the current arena and then load a new one.  We do this
+        check to make sure the framework isn't unloading and loading a world that
+        is going to be used again.  While this is rare, we do want to prevent this
+        error.
 
-        } else {
-            // Unload the previous arena world.
-            WorldManager.getInstance().unloadWorld(currentArenaWorldData);
+        NOTE 2: Added a BukkitRunnable here to give the world time to remove players
+        before we try to unload and delete the world files.
+        */
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (currentArenaWorldData == null) {
+                    // An arena world has not been loaded. Lets do that now.
+                    WorldManager.getInstance().copyWorld(currentArenaWorldData = worldToLoad);
 
-            // Load the next world
-            WorldManager.getInstance().copyWorld(currentArenaWorldData = worldToLoad);
-        }
+                } else {
+                    // Unload the previous arena world.
+                    WorldManager.getInstance().unloadWorld(currentArenaWorldData);
+
+                    // Load the next world
+                    WorldManager.getInstance().copyWorld(currentArenaWorldData = worldToLoad);
+                }
+            }
+        }.runTaskLater(plugin, 20 * 5);
 
         // Create and setup the lobby
         gameLobby.setupGameLocation();
@@ -212,7 +232,7 @@ public class GameManager extends BukkitRunnable {
             gameArena.allPlayersQuit(new ArenaSpectatorAccess());
         }
 
-        // Set reference to null
+        // Set teamSpawnLocation references to null
         if (teamSpawnLocations != null) {
 
             // Loop through and clean all locations.
@@ -223,8 +243,12 @@ public class GameManager extends BukkitRunnable {
             teamSpawnLocations = null;
         }
 
-        // Restore player inventories.
+        // Player specific resets.
         for (Player player : Bukkit.getOnlinePlayers()) {
+            // Set the arena spawn location to null.
+            playerMinigameManager.getPlayerProfileData(player).setArenaSpawnLocation(null);
+
+            // Restore player inventories.
             playerMinigameManager.restorePlayerInventoryBackup(player);
         }
 
@@ -369,16 +393,6 @@ public class GameManager extends BukkitRunnable {
 
         // If only one world exists, then just return the first one.
         return worldDataList.get(0);
-    }
-
-    /**
-     * Gets the path of the arena configuration file.
-     *
-     * @param worldData The world data needed for the path.
-     * @return A string that contains the YAML configuration path.
-     */
-    private static String getConfigurationPath(WorldData worldData) {
-        return "Worlds." + worldData.getWorldIndex();
     }
 
     /**

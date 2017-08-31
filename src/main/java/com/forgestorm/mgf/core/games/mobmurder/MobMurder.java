@@ -83,6 +83,11 @@ public class MobMurder extends Minigame {
         // Stop spawning mobs.
         spawnMobs.cancelRunnable();
 
+        // This can be null if the game ends during the tutorial stage.
+        if (arenaPointsCounter != null) {
+            arenaPointsCounter.removeAllPlayers();
+        }
+
         // Unregister listeners
         EntityDeathEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
