@@ -227,7 +227,6 @@ public class GameArena extends GameLocation {
         countdown--;
     }
 
-
     /**
      * This will send the spectator to the main spectator spawn point.
      *

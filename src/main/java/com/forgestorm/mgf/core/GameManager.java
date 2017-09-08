@@ -16,6 +16,7 @@ import com.forgestorm.mgf.world.WorldManager;
 import com.forgestorm.spigotcore.events.UpdateScoreboardEvent;
 import com.forgestorm.spigotcore.util.logger.ColorLogger;
 import com.forgestorm.spigotcore.util.math.RandomChance;
+import com.forgestorm.spigotcore.util.text.RandomString;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.Bukkit;
@@ -29,6 +30,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
@@ -51,7 +55,7 @@ import java.util.List;
  * without the prior written permission of the owner.
  */
 @Getter
-public class GameManager extends BukkitRunnable {
+public class GameManager extends BukkitRunnable implements Listener {
 
     private static GameManager instance = null;
     private final boolean showDebug = true;
@@ -69,7 +73,6 @@ public class GameManager extends BukkitRunnable {
     private int minPlayersToStartGame = 2;
     private WorldData currentArenaWorldData;
     private boolean inLobby = true;
-    @Setter
     private List<TeamSpawnLocations> teamSpawnLocations;
 
     private GameManager() {
@@ -89,16 +92,6 @@ public class GameManager extends BukkitRunnable {
     }
 
     /**
-     * Gets the path of the arena configuration file.
-     *
-     * @param worldData The world data needed for the path.
-     * @return A string that contains the YAML configuration path.
-     */
-    private static String getConfigurationPath(WorldData worldData) {
-        return "Worlds." + worldData.getWorldIndex();
-    }
-
-    /**
      * This will setup GameManager for first time use.
      *
      * @param plugin An instance of the main plugin class.
@@ -107,6 +100,9 @@ public class GameManager extends BukkitRunnable {
         // Prevent setup from being run more than once.
         if (isSetup) return;
         isSetup = true;
+
+        // Register listeners
+        Bukkit.getPluginManager().registerEvents(this, plugin);
 
         // Clear world entities. This will remove any unused holograms and other misc. entities.
         for (Entity entity : Bukkit.getWorlds().get(0).getEntities()) {
@@ -147,7 +143,7 @@ public class GameManager extends BukkitRunnable {
                 new File(plugin.getDataFolder() + "/" + gameSelector.getMinigameType().getFileName()));
 
         // Load arena world
-        WorldData worldToLoad = getRandomArenaWorld(arenaConfiguration);
+        WorldData worldToLoad = getRandomArenaWorldData(arenaConfiguration);
 
         /*
         NOTE 1: If the worldData isn't null and the worldData doesn't equal the current one,
@@ -283,6 +279,9 @@ public class GameManager extends BukkitRunnable {
 
         // Disable player manager.
         playerMinigameManager.onDisable();
+
+        // Unregister Listeners
+        WorldLoadEvent.getHandlerList().unregister(this);
     }
 
     @Override
@@ -369,6 +368,16 @@ public class GameManager extends BukkitRunnable {
     }
 
     /**
+     * Gets the path of the arena configuration file.
+     *
+     * @param worldData The world data needed for the path.
+     * @return A string that contains the YAML configuration path.
+     */
+    private static String getConfigurationPath(WorldData worldData) {
+        return "Worlds." + worldData.getWorldIndex();
+    }
+
+    /**
      * Responsible for getting a random world from the configuration.  This random world
      * will be the world that players will play in in the minigames.
      * <p>
@@ -378,14 +387,17 @@ public class GameManager extends BukkitRunnable {
      *
      * @return This will return the world data for one particular world.
      */
-    public WorldData getRandomArenaWorld(Configuration configuration) {
+    private WorldData getRandomArenaWorldData(Configuration configuration) {
         List<WorldData> worldDataList = new ArrayList<>();
         ConfigurationSection outerSection = configuration.getConfigurationSection("Worlds");
 
         // Get all worlds
         for (String worldNumber : outerSection.getKeys(false)) {
+
             String worldName = configuration.getString("Worlds." + worldNumber + ".Name");
-            worldDataList.add(new WorldData(Integer.valueOf(worldNumber), worldName));
+            String destinationName = worldName  + "-" + RandomString.getSaltString(10);
+
+            worldDataList.add(new WorldData(worldName, destinationName, Integer.valueOf(worldNumber)));
         }
 
         // Return random world data.
@@ -400,9 +412,8 @@ public class GameManager extends BukkitRunnable {
      * used to spawn teams in the world they will be playing in.
      *
      * @param worldData The worldData to use to get the YML path to the values needed.
-     * @return A list of TeamSpawnLocation objects.
      */
-    public void generateTeamSpawnLocations(WorldData worldData, Configuration configuration) {
+    private void generateTeamSpawnLocations(WorldData worldData, Configuration configuration) {
         List<TeamSpawnLocations> teamSpawnLocations = new ArrayList<>();
 
         // Get team spawn locations.
@@ -417,7 +428,7 @@ public class GameManager extends BukkitRunnable {
             locationsAsStr.forEach((locationAsStr) -> {
                 String[] parts = locationAsStr.split("/");
                 locations.add(new Location(
-                        Bukkit.getWorld(worldData.getWorldName()),
+                        Bukkit.getWorld(worldData.getFileName()),
                         Double.parseDouble(parts[0]),
                         Double.parseDouble(parts[1]),
                         Double.parseDouble(parts[2]))
@@ -437,16 +448,27 @@ public class GameManager extends BukkitRunnable {
      * @return A spectator location.
      */
     public Location getSpectatorLocation() {
-        GameManager gameManager = GameManager.getInstance();
-        WorldData worldData = gameManager.getCurrentArenaWorldData();
-        String spectator = gameManager.getArenaConfiguration().getString(getConfigurationPath(worldData) + ".Spectator");
+        WorldData worldData = getCurrentArenaWorldData();
+        String spectator = getArenaConfiguration().getString(getConfigurationPath(worldData) + ".Spectator");
         String[] spectatorParts = spectator.split("/");
 
         return new Location(
-                Bukkit.getWorld(worldData.getWorldName()),
+                Bukkit.getWorld(worldData.getFileName()),
                 Double.parseDouble(spectatorParts[0]),
                 Double.parseDouble(spectatorParts[1]),
                 Double.parseDouble(spectatorParts[2])
         );
+    }
+
+    @EventHandler
+    public void onWorldLoad(WorldLoadEvent event) {
+        /*
+        Make sure we are only generating team spawn locations if the loaded world from this
+        event matches our currentWorldData file name. Otherwise return.
+         */
+        if (!event.getWorld().getName().equals(getCurrentArenaWorldData().getFileName())) return;
+
+        // Generate the team spawn locations.
+        generateTeamSpawnLocations(getCurrentArenaWorldData(), getArenaConfiguration());
     }
 }

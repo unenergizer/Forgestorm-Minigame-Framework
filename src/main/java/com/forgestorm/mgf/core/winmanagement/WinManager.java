@@ -8,14 +8,18 @@ import com.forgestorm.mgf.core.winmanagement.winevents.IndividualTopScoreWinEven
 import com.forgestorm.mgf.core.winmanagement.winevents.LastManStandingWinEvent;
 import com.forgestorm.mgf.core.winmanagement.winevents.LastTeamStandingWinEvent;
 import com.forgestorm.mgf.core.winmanagement.winevents.TeamTopScoreWinEvent;
+import com.forgestorm.mgf.util.MapUtil;
+import com.forgestorm.spigotcore.util.text.CenterChatText;
 import lombok.Getter;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /*********************************************************************************
  *
@@ -64,23 +68,62 @@ public class WinManager implements Listener {
 
     @EventHandler
     public void individualTopScores(IndividualTopScoreWinEvent event) {
-        // TODO: Create friendly end game score list
-        List<String> list = new ArrayList<>();
-        list.add(event.getPlayerScoreMap().toString());
-        setScoreMessages(list);
+        Map<Player, Integer> temp = MapUtil.sortByValueReverse(event.getPlayerScoreMap());
+        List<String> friendlyScoreList = new ArrayList<>();
+
+        int place = 1;
+        for (Map.Entry<Player, Integer> entry : temp.entrySet()) {
+            if (place > 3) break;
+            friendlyScoreList.add(CenterChatText.centerChatMessage(place + ". " + entry.getKey().getDisplayName() + " got a score of " + entry.getValue()));
+            place++;
+        }
+
+        setScoreMessages(friendlyScoreList);
 
         endMinigame();
     }
 
     @EventHandler
     public void teamTopScores(TeamTopScoreWinEvent event) {
-        // TODO: Create friendly end game score list
+        Map<Team, Integer> temp = MapUtil.sortByValueReverse(event.getTeamScoreMap());
+        List<String> friendlyScoreList = new ArrayList<>();
+
+        int place = 1;
+        for (Map.Entry<Team, Integer> entry : temp.entrySet()) {
+            if (place > 3) break;
+            friendlyScoreList.add(CenterChatText.centerChatMessage(place + ". " + entry.getKey().getTeamName() + " got a score of " + entry.getValue()));
+            place++;
+        }
+        
+        setScoreMessages(friendlyScoreList);
+
         endMinigame();
     }
 
     @EventHandler
     public void lastManStanding(LastManStandingWinEvent event) {
-        // TODO: Create friendly end game score list
+        // Get the winning players, and reverse the list.
+        List<Player> players = event.getPlayers();
+        Collections.reverse(players);
+        List<String> friendlyScoreList = new ArrayList<>();
+
+        // Generate top 3 teams
+        int place = 1;
+
+        for (Player player : players) {
+            if (place > 3) break;
+            String prefix = "";
+            if (place == 1) prefix = "st";
+            if (place == 2) prefix = "nd";
+            if (place == 3) prefix = "rd";
+            friendlyScoreList.add(CenterChatText.centerChatMessage(player.getDisplayName() + " got " + place + prefix));
+            place++;
+        }
+
+        // Set score messages
+        setScoreMessages(friendlyScoreList);
+
+        // End the minigame
         endMinigame();
     }
 
@@ -95,8 +138,8 @@ public class WinManager implements Listener {
         int place = 1;
 
         for (Team team : teamList) {
-            if (place > 3) continue;
-            friendlyScoreList.add(place + ". " + team.getTeamColor() + team.getTeamName());
+            if (place > 3) break;
+            friendlyScoreList.add(CenterChatText.centerChatMessage(place + ". " + team.getTeamColor() + team.getTeamName()));
             place++;
         }
 

@@ -1,7 +1,6 @@
 package com.forgestorm.mgf.world;
 
 import com.forgestorm.mgf.MinigameFramework;
-import com.forgestorm.mgf.core.GameManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.World;
@@ -35,9 +34,9 @@ public class WorldManager extends BukkitRunnable {
     private static boolean isSetup = false;
 
     private final AsyncFileManager asyncFileManager = new AsyncFileManager(this);
-    private final Queue<String> worldLoadQueue = new ConcurrentLinkedQueue<>();
-    private final Queue<String> worldUnloadQueue = new ConcurrentLinkedQueue<>();
-    private Map<String, World> loadedWorlds = new HashMap<>();
+    private final Queue<WorldData> worldLoadQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<WorldData> worldUnloadQueue = new ConcurrentLinkedQueue<>();
+    private Map<WorldData, World> loadedWorlds = new HashMap<>();
 
     private WorldManager() {
     }
@@ -68,16 +67,16 @@ public class WorldManager extends BukkitRunnable {
         asyncFileManager.runTaskTimerAsynchronously(minigameFramework, 0, 20 * 5);
     }
 
-    /**
-     * Check if a given world is loaded.
-     *
-     * @param worldData The world data and name of the world to check.
-     * @return True if the world is loaded, false otherwise.
-     */
-    public boolean isWorldLoaded(WorldData worldData) {
-        for (World world : Bukkit.getWorlds()) if (world.getName().equals(worldData.getWorldName())) return true;
-        return false;
-    }
+//    /**
+//     * Check if a given world is loaded.
+//     *
+//     * @param worldData The world data and name of the world to check.
+//     * @return True if the world is loaded, false otherwise.
+//     */
+//    public boolean isWorldLoaded(WorldData worldData) {
+//        for (World world : Bukkit.getWorlds()) if (world.getName().equals(worldData.getWorldName())) return true;
+//        return false;
+//    }
 
     /**
      * Gets the requested world.
@@ -86,7 +85,7 @@ public class WorldManager extends BukkitRunnable {
      *                  needed to get the requested world.
      */
     public void copyWorld(WorldData worldData) {
-        asyncFileManager.addWorldToCopy(worldData.getWorldName());
+        asyncFileManager.addWorldToCopy(worldData);
     }
 
     /**
@@ -96,27 +95,17 @@ public class WorldManager extends BukkitRunnable {
      * @return A world.
      */
     public World getWorld(WorldData worldData) {
-        return getWorld(worldData.getWorldName());
-    }
-
-    /**
-     * Gets a world.
-     *
-     * @param worldName The world name.
-     * @return A world.
-     */
-    public World getWorld(String worldName) {
-        if (!loadedWorlds.containsKey(worldName)) throw new NullPointerException("World is not loaded!");
-        return loadedWorlds.get(worldName);
+        if (!loadedWorlds.containsKey(worldData)) throw new NullPointerException("World is not loaded!");
+        return loadedWorlds.get(worldData);
     }
 
     /**
      * Prepares to load a world sync with the server.
      *
-     * @param worldName The name of the world.
+     * @param worldData The data that represents a world.
      */
-    void loadWorld(String worldName) {
-        worldLoadQueue.add(worldName);
+    void loadWorld(WorldData worldData) {
+        worldLoadQueue.add(worldData);
     }
 
     /**
@@ -126,7 +115,7 @@ public class WorldManager extends BukkitRunnable {
      *                  to unload.
      */
     public void unloadWorld(WorldData worldData) {
-        worldUnloadQueue.add(worldData.getWorldName());
+        worldUnloadQueue.add(worldData);
     }
 
     /**
@@ -136,17 +125,13 @@ public class WorldManager extends BukkitRunnable {
      */
     private void syncWorldLoad() {
         if (worldLoadQueue.isEmpty()) return;
-        String worldName = worldLoadQueue.remove();
+        WorldData worldData = worldLoadQueue.remove();
 
-        WorldCreator worldCreator = new WorldCreator(worldName);
+        WorldCreator worldCreator = new WorldCreator(worldData.getFileName());
         worldCreator.createWorld();
 
         // Set main reference of the arena world.
-        loadedWorlds.put(worldName, Bukkit.getWorld(worldName));
-
-        //Generate team spawn locations
-        GameManager gameManager = GameManager.getInstance();
-        gameManager.generateTeamSpawnLocations(gameManager.getCurrentArenaWorldData(), gameManager.getArenaConfiguration());
+        loadedWorlds.put(worldData, Bukkit.getWorld(worldData.getFileName()));
     }
 
     /**
@@ -157,8 +142,8 @@ public class WorldManager extends BukkitRunnable {
      */
     private void syncWorldUnload() {
         if (worldUnloadQueue.isEmpty()) return;
-        String worldName = worldUnloadQueue.remove();
-        World world = loadedWorlds.get(worldName);
+        WorldData worldData = worldUnloadQueue.remove();
+        World world = loadedWorlds.get(worldData);
 
         // Unload chunks
         for (Chunk chunk : world.getLoadedChunks()) {
@@ -167,10 +152,10 @@ public class WorldManager extends BukkitRunnable {
 
         // Unload the world
         Bukkit.unloadWorld(world, false);
-        loadedWorlds.remove(worldName);
+        loadedWorlds.remove(worldData);
 
         // Prepare the directory for deletion.
-        asyncFileManager.addWorldToDelete(worldName);
+        asyncFileManager.addWorldToDelete(worldData);
     }
 
     /**

@@ -4,9 +4,9 @@ import com.forgestorm.mgf.MinigameFramework;
 import com.forgestorm.mgf.core.GameManager;
 import com.forgestorm.mgf.core.games.Minigame;
 import com.forgestorm.mgf.core.games.mobmurder.kits.MurderKit;
-import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.score.StatType;
 import com.forgestorm.mgf.core.scoreboard.ArenaPointsCounter;
+import com.forgestorm.mgf.core.selectable.kit.Kit;
 import com.forgestorm.mgf.core.selectable.team.Team;
 import com.forgestorm.mgf.world.WorldManager;
 import com.forgestorm.spigotcore.util.math.RandomChance;
@@ -23,6 +23,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -92,6 +93,7 @@ public class MobMurder extends Minigame {
         EntityDeathEvent.getHandlerList().unregister(this);
         EntityDamageByEntityEvent.getHandlerList().unregister(this);
         CreatureSpawnEvent.getHandlerList().unregister(this);
+        BlockBreakEvent.getHandlerList().unregister(this);
     }
 
     @Override
@@ -103,7 +105,8 @@ public class MobMurder extends Minigame {
     public List<String> getGamePlayTips() {
         ArrayList<String> tips = new ArrayList<>();
         tips.add("Run around as fast as you can and kill the farm animals.");
-        tips.add("Use your weapons to kill them.  You get points for each animal you kill.");
+        tips.add("Use your weapons to kill them.");
+        tips.add("You get points for each animal you kill.");
         tips.add("The first person to get " + maxScore + " points wins!");
         return tips;
     }
@@ -112,7 +115,8 @@ public class MobMurder extends Minigame {
     public List<String> getGamePlayRules() {
         ArrayList<String> rules = new ArrayList<>();
         rules.add("Run around as fast as you can and kill the farm animals.");
-        rules.add("Use your weapons to kill them.  You get points for each animal you kill.");
+        rules.add("Use your weapons to kill them.");
+        rules.add("You get points for each animal you kill.");
         rules.add("The first person to get " + maxScore + " points wins!");
         return rules;
     }
@@ -215,5 +219,19 @@ public class MobMurder extends Minigame {
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         if (!allowedMobs.contains(event.getEntityType())) return;
         event.setCancelled(false);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onBlockBreak(BlockBreakEvent event) {
+        switch (event.getBlock().getType()) {
+            case LONG_GRASS:
+            case DOUBLE_PLANT:
+            case SUGAR_CANE_BLOCK:
+                event.setCancelled(false);
+                break;
+            default:
+                event.setCancelled(true);
+                break;
+        }
     }
 }

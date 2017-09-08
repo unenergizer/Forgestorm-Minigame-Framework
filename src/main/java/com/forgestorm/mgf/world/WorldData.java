@@ -2,7 +2,6 @@ package com.forgestorm.mgf.world;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
 
 /*********************************************************************************
  *
@@ -21,9 +20,21 @@ import lombok.Setter;
  */
 
 @Getter
-@Setter
 @AllArgsConstructor
 public class WorldData {
-    private int worldIndex; // The index number of the world in the list.
-    private String worldName; // The file name of the world.
+
+    /**
+     * The original file name of the world.
+     */
+    private final String worldName;
+
+    /**
+     * The file name of the world with random numbers appended to the end.
+     */
+    private final String fileName;
+
+    /**
+     * The index number of the world in the list.
+     */
+    private final int worldIndex;
 }
